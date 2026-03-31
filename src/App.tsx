@@ -16,7 +16,11 @@ import {
   Trophy,
   Activity,
   ChevronRight,
-  Shield
+  Shield,
+  Edit2,
+  Check,
+  X,
+  ChevronLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -107,6 +111,10 @@ export default function App() {
             <LiveScoreScreen 
               key="live" 
               seconds={seconds}
+              isActive={isActive}
+              matchFormat={matchFormat}
+              customPeriodCount={customPeriodCount}
+              customPeriodDuration={customPeriodDuration}
               formatTime={formatTime}
               getPeriodLabel={getPeriodLabel}
               setIsActive={setIsActive}
@@ -167,6 +175,10 @@ export default function App() {
 
 const LiveScoreScreen = ({
   seconds,
+  isActive,
+  matchFormat,
+  customPeriodCount,
+  customPeriodDuration,
   formatTime,
   getPeriodLabel,
   setIsActive,
@@ -179,6 +191,52 @@ const LiveScoreScreen = ({
   setAwayScore,
   resetMatch
 }: any) => {
+  const [isEditingTime, setIsEditingTime] = useState(false);
+  const [editMinutes, setEditMinutes] = useState(Math.floor(seconds / 60).toString());
+  const [editSeconds, setEditSeconds] = useState((seconds % 60).toString());
+
+  const handleSetTime = () => {
+    const mins = parseInt(editMinutes) || 0;
+    const secs = parseInt(editSeconds) || 0;
+    setSeconds(mins * 60 + secs);
+    setIsEditingTime(false);
+  };
+
+  const handlePeriodChange = (direction: 'next' | 'prev') => {
+    let duration = 45; // Default
+    let count = 2;
+
+    if (matchFormat === 'kids') {
+      duration = 15;
+      count = 3;
+    } else if (matchFormat === 'adults') {
+      duration = 45;
+      count = 2;
+    } else {
+      duration = customPeriodDuration;
+      count = customPeriodCount;
+    }
+
+    const durationInSeconds = duration * 60;
+    const currentPeriod = Math.floor(seconds / durationInSeconds);
+    
+    let nextSeconds = seconds;
+    if (direction === 'next') {
+      if (currentPeriod < count - 1) {
+        nextSeconds = (currentPeriod + 1) * durationInSeconds;
+      }
+    } else {
+      if (currentPeriod > 0) {
+        nextSeconds = (currentPeriod - 1) * durationInSeconds;
+      } else {
+        nextSeconds = 0;
+      }
+    }
+    
+    setSeconds(nextSeconds);
+    setIsActive(false);
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: 20 }}
@@ -192,38 +250,129 @@ const LiveScoreScreen = ({
         animate={{ opacity: 1, y: 0 }}
         className="bg-surface-high rounded-2xl p-3 flex items-center justify-between shadow-2xl border border-white/5"
       >
-        <div className="flex flex-col w-[120px] shrink-0">
-          <span className="font-headline text-primary text-4xl font-bold tracking-tight tabular-nums leading-none">
-            {formatTime(seconds)}
-          </span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 mt-2 h-4 flex items-center overflow-hidden whitespace-nowrap">
-            {getPeriodLabel()}
-          </span>
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="font-headline text-primary text-4xl font-bold tracking-tight tabular-nums leading-none">
+              {formatTime(seconds)}
+            </span>
+            <button 
+              onClick={() => {
+                setEditMinutes(Math.floor(seconds / 60).toString());
+                setEditSeconds((seconds % 60).toString());
+                setIsEditingTime(true);
+              }}
+              className="p-1 text-white/10 hover:text-primary transition-colors"
+            >
+              <Edit2 className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex items-center gap-0.5 bg-white/5 rounded-full px-2 py-0.5 w-fit border border-white/5">
+            <button 
+              onClick={() => handlePeriodChange('prev')}
+              className="p-0.5 text-white/20 hover:text-primary transition-colors"
+            >
+              <ChevronLeft className="w-2 h-2" strokeWidth={4} />
+            </button>
+            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white/40 h-3 flex items-center overflow-hidden whitespace-nowrap px-1">
+              {getPeriodLabel()}
+            </span>
+            <button 
+              onClick={() => handlePeriodChange('next')}
+              className="p-0.5 text-white/20 hover:text-primary transition-colors"
+            >
+              <ChevronRight className="w-2 h-2" strokeWidth={4} />
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button 
-            onClick={() => setIsActive(false)}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-bright text-white hover:bg-white/10 transition-colors active:scale-95"
+            onClick={() => setIsActive(!isActive)}
+            className={`h-11 px-5 flex items-center justify-center gap-2 rounded-2xl transition-all active:scale-95 font-headline font-black text-[9px] uppercase tracking-[0.2em] ${
+              isActive 
+                ? 'bg-white/5 text-white/60 border border-white/5 hover:bg-white/10' 
+                : 'bg-primary text-on-primary shadow-[0_8px_20px_rgba(0,227,253,0.2)] hover:brightness-110'
+            }`}
           >
-            <Pause className="w-5 h-5" />
-          </button>
-          <button 
-            onClick={() => setIsActive(true)}
-            className="w-12 h-12 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-[0_0_20px_rgba(129,236,255,0.3)] hover:brightness-110 transition-all active:scale-95"
-          >
-            <Play className="w-6 h-6 fill-current" />
+            {isActive ? (
+              <>
+                <Pause className="w-3.5 h-3.5" />
+                <span>Pause</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-3.5 h-3.5 fill-current" />
+                <span>{seconds > 0 ? 'PLAY' : 'START'}</span>
+              </>
+            )}
           </button>
           <button 
             onClick={() => {
               setSeconds(0);
               setIsActive(false);
             }}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-bright text-white hover:bg-white/10 transition-colors active:scale-95"
+            className="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 text-white/30 hover:text-white hover:bg-white/10 transition-all border border-white/5 active:scale-95"
+            title="Réinitialiser"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </motion.section>
+
+      {/* Manual Time Setting Modal/Overlay */}
+      <AnimatePresence>
+        {isEditingTime && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-surface/90 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-surface-high border border-white/10 rounded-3xl p-6 w-full max-w-xs shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="font-headline font-black text-primary uppercase tracking-widest text-xs">Ajuster le Chrono</h3>
+                <button onClick={() => setIsEditingTime(false)} className="text-white/40 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-center gap-4 mb-8">
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Minutes</span>
+                  <input 
+                    type="number" 
+                    value={editMinutes}
+                    onChange={(e) => setEditMinutes(e.target.value)}
+                    className="w-20 h-20 bg-surface-bright border border-white/5 rounded-2xl text-center text-3xl font-headline font-bold text-white focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+                <span className="text-4xl font-headline font-bold text-white/20 mt-6">:</span>
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Secondes</span>
+                  <input 
+                    type="number" 
+                    value={editSeconds}
+                    onChange={(e) => setEditSeconds(e.target.value)}
+                    className="w-20 h-20 bg-surface-bright border border-white/5 rounded-2xl text-center text-3xl font-headline font-bold text-white focus:outline-none focus:border-primary/50"
+                  />
+                </div>
+              </div>
+
+              <button 
+                onClick={handleSetTime}
+                className="w-full bg-primary h-14 rounded-2xl flex items-center justify-center gap-3 shadow-lg hover:brightness-110 active:scale-95 transition-all"
+              >
+                <Check className="w-6 h-6 text-on-primary" />
+                <span className="font-headline font-black text-on-primary uppercase tracking-widest text-sm">Confirmer</span>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Score Display */}
       <section className="flex flex-col items-center justify-center py-1">
