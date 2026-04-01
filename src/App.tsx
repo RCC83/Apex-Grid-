@@ -104,27 +104,20 @@ export default function App() {
           {/* Logo Section (Left) */}
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 z-10 cursor-pointer"
+            className="flex items-center gap-3 z-10 cursor-pointer"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-[0_4px_15px_rgba(0,227,253,0.3)] border border-white/10">
-              <Trophy className="w-5 h-5 text-on-primary" />
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-[0_4px_15px_rgba(0,227,253,0.3)] border border-white/10">
+              <Trophy className="w-6 h-6 text-on-primary" />
             </div>
-            <div className="flex flex-col -space-y-0.5 hidden sm:flex">
-              <span className="text-text font-headline font-black italic tracking-tighter text-[10px] leading-none">
+            <div className="flex flex-col -space-y-1">
+              <span className="text-text font-headline font-black italic tracking-tighter text-[14px] leading-none">
                 MATCH
               </span>
-              <span className="text-primary font-headline font-black italic tracking-tighter text-[10px] leading-none">
+              <span className="text-primary font-headline font-black italic tracking-tighter text-[14px] leading-none">
                 COMPTEUR
               </span>
             </div>
           </motion.div>
-
-          {/* Title Section (Center) */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <h1 className="font-headline uppercase tracking-[0.2em] font-black text-[10px] text-primary">
-              MATCH COMPTEUR
-            </h1>
-          </div>
 
           {/* Actions Section (Right) */}
           <div className="flex items-center z-10">
