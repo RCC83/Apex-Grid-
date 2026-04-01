@@ -4,22 +4,46 @@
   --font-headline: "Lexend", ui-sans-serif, system-ui, sans-serif;
   --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
   
-  --color-surface: #0c0e12;
-  --color-surface-container: #111318;
-  --color-surface-high: #1d2025;
-  --color-surface-bright: #292c32;
+  --color-surface: #09090b;
+  --color-surface-container: #18181b;
+  --color-surface-high: #27272a;
+  --color-surface-bright: #3f3f46;
   
   --color-primary: #81ecff;
   --color-primary-container: #00e3fd;
+  --color-primary-dark: #00b8cc;
   --color-on-primary: #003840;
   
   --color-secondary: #ff7436;
   --color-error: #ff6e84;
+  
+  --color-text: #fafafa;
+  --color-text-muted: #a1a1aa;
+  --color-text-dim: #52525b;
+}
+
+.light {
+  --color-surface: #fafafa;
+  --color-surface-container: #f4f4f5;
+  --color-surface-high: #ffffff;
+  --color-surface-bright: #e4e4e7;
+  
+  --color-primary: #0ea5e9;
+  --color-primary-container: #0284c7;
+  --color-primary-dark: #0369a1;
+  --color-on-primary: #ffffff;
+  
+  --color-secondary: #f97316;
+  --color-error: #ef4444;
+  
+  --color-text: #09090b;
+  --color-text-muted: #71717a;
+  --color-text-dim: #d4d4d8;
 }
 
 @layer base {
   body {
-    @apply bg-surface text-[#f6f6fc] font-body antialiased;
+    @apply bg-surface text-text font-body antialiased transition-colors duration-300;
   }
 }
 
