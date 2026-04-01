@@ -99,7 +99,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden bg-surface text-text">
       {/* Header */}
-      <header className="fixed top-0 w-full max-w-md z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5">
+      <header className="fixed top-0 w-full max-w-md z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)]">
         <div className="relative flex items-center justify-between px-4 h-14">
           {/* Logo Section (Left) */}
           <motion.div 
@@ -131,7 +131,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="pt-16 pb-20 px-4 flex-1 flex flex-col justify-center">
+      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-20 px-4 flex-1 flex flex-col justify-center">
         <AnimatePresence mode="wait">
           {currentPage === 'live' ? (
             <LiveScoreScreen 
