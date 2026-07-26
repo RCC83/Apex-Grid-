@@ -208,23 +208,24 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-[360px] mx-auto relative overflow-hidden bg-surface text-text">
+    <div className="min-h-[100dvh] flex flex-col max-w-md w-full mx-auto relative overflow-hidden bg-surface text-text shadow-2xl border-x border-white/5">
       {/* Header */}
-      <header className="fixed top-0 w-full max-w-[360px] z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)]">
-        <div className="relative flex items-center justify-between px-3 h-12">
+      <header className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-surface/90 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)]">
+        <div className="relative flex items-center justify-between px-4 h-14">
           {/* Logo Section (Left) */}
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 z-10 cursor-pointer"
+            onClick={() => setCurrentPage('home')}
+            className="flex items-center gap-2.5 z-10 cursor-pointer"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-[0_3px_10px_rgba(0,227,253,0.25)] border border-white/10">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-[0_3px_10px_rgba(0,227,253,0.25)] border border-white/10">
               <Trophy className="w-4 h-4 text-on-primary" />
             </div>
             <div className="flex flex-col -space-y-0.5">
-              <span className="text-text font-headline font-black italic tracking-tighter text-[12px] leading-none">
+              <span className="text-text font-headline font-black italic tracking-tighter text-[13px] leading-none">
                 MATCH
               </span>
-              <span className="text-primary font-headline font-black italic tracking-tighter text-[12px] leading-none">
+              <span className="text-primary font-headline font-black italic tracking-tighter text-[13px] leading-none">
                 COMPTEUR
               </span>
             </div>
@@ -234,15 +235,16 @@ export default function App() {
           <div className="flex items-center z-10">
             <button 
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2 rounded-lg bg-surface-bright text-text-muted hover:text-primary transition-all active:scale-90"
+              className="p-2.5 rounded-xl bg-surface-bright text-text-muted hover:text-primary transition-all active:scale-90"
+              aria-label="Changer de thème"
             >
-              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="pt-12 pb-12 px-3 flex-1 flex flex-col justify-start">
+      <main className="pt-16 pb-20 px-4 flex-1 flex flex-col justify-start">
         <AnimatePresence mode="wait">
           {currentPage === 'live' ? (
             <LiveScoreScreen 
@@ -293,21 +295,21 @@ export default function App() {
       </main>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 w-full max-w-[360px] z-50 bg-surface/90 backdrop-blur-2xl border-t border-white/5 rounded-t-xl shadow-2xl">
-        <div className="flex justify-around items-center pl-3 pr-[14px] border-[10px] border-transparent w-full" style={{ height: '53px', borderRadius: '10px' }}>
+      <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 bg-surface/95 backdrop-blur-2xl border-t border-white/10 rounded-t-2xl shadow-2xl pb-[env(safe-area-inset-bottom)]">
+        <div className="flex justify-around items-center h-14 px-4 w-full">
           <button 
             onClick={() => setCurrentPage('home')}
-            className={`flex items-center gap-1.5 transition-all ${currentPage === 'home' ? 'text-primary bg-primary/10 px-4 py-1 rounded-lg' : 'text-text-muted hover:text-primary px-3 py-1'}`}
+            className={`flex items-center justify-center gap-2 h-10 px-5 rounded-xl transition-all ${currentPage === 'home' ? 'text-primary bg-primary/10 font-bold shadow-sm' : 'text-text-muted hover:text-primary'}`}
           >
             <Home className="w-4 h-4" />
-            <span className="font-headline font-bold text-[9px] uppercase tracking-wider">Accueil</span>
+            <span className="font-headline font-bold text-[10px] uppercase tracking-wider">Accueil</span>
           </button>
           <button 
             onClick={() => setCurrentPage('live')}
-            className={`flex items-center gap-1.5 transition-all ${currentPage === 'live' ? 'text-primary bg-primary/10 px-4 py-1 rounded-lg' : 'text-text-muted hover:text-primary px-3 py-1'}`}
+            className={`flex items-center justify-center gap-2 h-10 px-5 rounded-xl transition-all ${currentPage === 'live' ? 'text-primary bg-primary/10 font-bold shadow-sm' : 'text-text-muted hover:text-primary'}`}
           >
             <Timer className="w-4 h-4" />
-            <span className="font-headline font-bold text-[9px] uppercase tracking-wider">Live Score</span>
+            <span className="font-headline font-bold text-[10px] uppercase tracking-wider">Live Score</span>
           </button>
         </div>
       </nav>
@@ -410,19 +412,17 @@ const LiveScoreScreen = ({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex flex-col gap-3 w-full py-0.5"
-      style={{ paddingTop: '21px' }}
+      className="flex flex-col gap-3.5 w-full py-1"
     >
       {/* Timer Card */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-surface-high rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-text/5"
-        style={{ paddingTop: '30px' }}
+        className="bg-surface-high rounded-2xl p-3.5 flex items-center justify-between shadow-lg border border-text/5"
       >
-        <div className="flex flex-col gap-1 min-w-0">
-          <div className="flex items-center gap-1.5">
-            <span className="font-headline text-primary text-3xl font-bold tracking-tight tabular-nums leading-none">
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-headline text-primary text-3xl sm:text-4xl font-bold tracking-tight tabular-nums leading-none">
               {formatTime(seconds)}
             </span>
             <button 
@@ -431,33 +431,36 @@ const LiveScoreScreen = ({
                 setEditSeconds((seconds % 60).toString());
                 setIsEditingTime(true);
               }}
-              className="p-1 text-text-dim hover:text-primary transition-colors"
+              className="p-1.5 text-text-dim hover:text-primary transition-colors"
+              aria-label="Éditer le temps"
             >
-              <Edit2 className="w-3 h-3" />
+              <Edit2 className="w-3.5 h-3.5" />
             </button>
           </div>
-          <div className="flex items-center gap-0.5 bg-text/5 rounded-full px-2 py-0.5 w-fit border border-text/5">
+          <div className="flex items-center gap-1 bg-text/5 rounded-full px-2.5 py-0.5 w-fit border border-text/5">
             <button 
               onClick={() => handlePeriodChange('prev')}
-              className="p-0.5 text-text-muted hover:text-primary transition-colors"
+              className="p-1 text-text-muted hover:text-primary transition-colors"
+              aria-label="Période précédente"
             >
-              <ChevronLeft className="w-2 h-2" strokeWidth={4} />
+              <ChevronLeft className="w-2.5 h-2.5" strokeWidth={4} />
             </button>
-            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-text-muted h-3 flex items-center overflow-hidden whitespace-nowrap px-1">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-text-muted h-3.5 flex items-center overflow-hidden whitespace-nowrap px-1">
               {getPeriodLabel()}
             </span>
             <button 
               onClick={() => handlePeriodChange('next')}
-              className="p-0.5 text-text-muted hover:text-primary transition-colors"
+              className="p-1 text-text-muted hover:text-primary transition-colors"
+              aria-label="Période suivante"
             >
-              <ChevronRight className="w-2 h-2" strokeWidth={4} />
+              <ChevronRight className="w-2.5 h-2.5" strokeWidth={4} />
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsActive(!isActive)}
-            className={`h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 font-headline font-black text-[9px] uppercase tracking-[0.2em] ${
+            className={`h-10 px-4 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 font-headline font-black text-[10px] uppercase tracking-[0.2em] ${
               isActive 
                 ? 'bg-text/5 text-text-muted border border-text/5 hover:bg-text/10' 
                 : 'bg-primary text-on-primary shadow-[0_4px_12px_rgba(0,227,253,0.2)] hover:brightness-110'
@@ -465,12 +468,12 @@ const LiveScoreScreen = ({
           >
             {isActive ? (
               <>
-                <Pause className="w-3 h-3" />
+                <Pause className="w-3.5 h-3.5" />
                 <span>Pause</span>
               </>
             ) : (
               <>
-                <Play className="w-3 h-3 fill-current" />
+                <Play className="w-3.5 h-3.5 fill-current" />
                 <span>{seconds > 0 ? 'PLAY' : 'START'}</span>
               </>
             )}
@@ -480,10 +483,11 @@ const LiveScoreScreen = ({
               setSeconds(0);
               setIsActive(false);
             }}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
             title="Réinitialiser"
+            aria-label="Réinitialiser"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
         </div>
       </motion.section>
@@ -545,27 +549,25 @@ const LiveScoreScreen = ({
       </AnimatePresence>
 
       {/* Score Display with Inline + / - Controls */}
-      <section 
-        className="bg-surface-high/80 border border-text/10 rounded-xl p-2.5 shadow-md flex flex-col gap-1"
-        style={{ marginTop: '22px' }}
-      >
+      <section className="bg-surface-high/80 border border-text/10 rounded-2xl p-3 shadow-md flex flex-col gap-2">
         <div className="flex items-center justify-between w-full px-1 gap-2">
           {/* Home Team Column */}
           <div className="flex flex-col items-center flex-1 min-w-0">
-            <div className="h-3.5 flex items-center justify-center w-full overflow-hidden mb-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-primary text-center truncate w-full">
+            <div className="h-4 flex items-center justify-center w-full overflow-hidden mb-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-primary text-center truncate w-full">
                 {homeTeamName || 'DOMICILE'}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={() => handleHomeScoreChange(-1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
                 title="-1 Domicile"
+                aria-label="-1 Domicile"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
-              <div className="h-[44px] relative flex items-center justify-center min-w-[32px] overflow-hidden">
+              <div className="h-[48px] relative flex items-center justify-center min-w-[36px] overflow-hidden">
                 <AnimatePresence mode="popLayout">
                   <motion.span 
                     key={homeScore}
@@ -580,34 +582,36 @@ const LiveScoreScreen = ({
               </div>
               <button 
                 onClick={() => handleHomeScoreChange(1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-on-primary shadow-sm hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary text-on-primary shadow-md hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
                 title="+1 Domicile"
+                aria-label="+1 Domicile"
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center h-[44px] pt-3">
-            <span className="font-headline text-lg font-bold text-primary/20">-</span>
+          <div className="flex flex-col items-center justify-center h-[48px] pt-3">
+            <span className="font-headline text-xl font-bold text-primary/30">-</span>
           </div>
 
           {/* Away Team Column */}
           <div className="flex flex-col items-center flex-1 min-w-0">
-            <div className="h-3.5 flex items-center justify-center w-full overflow-hidden mb-1">
-              <span className="text-[10px] font-black uppercase tracking-wider text-secondary text-center truncate w-full">
+            <div className="h-4 flex items-center justify-center w-full overflow-hidden mb-1">
+              <span className="text-[11px] font-black uppercase tracking-wider text-secondary text-center truncate w-full">
                 {awayTeamName || 'EXTÉRIEUR'}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-2">
               <button 
                 onClick={() => handleAwayScoreChange(-1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
                 title="-1 Extérieur"
+                aria-label="-1 Extérieur"
               >
-                <Minus className="w-3.5 h-3.5" />
+                <Minus className="w-4 h-4" />
               </button>
-              <div className="h-[44px] relative flex items-center justify-center min-w-[32px] overflow-hidden">
+              <div className="h-[48px] relative flex items-center justify-center min-w-[36px] overflow-hidden">
                 <AnimatePresence mode="popLayout">
                   <motion.span 
                     key={awayScore}
@@ -622,10 +626,11 @@ const LiveScoreScreen = ({
               </div>
               <button 
                 onClick={() => handleAwayScoreChange(1)}
-                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-on-primary shadow-sm hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary text-on-primary shadow-md hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
                 title="+1 Extérieur"
+                aria-label="+1 Extérieur"
               >
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -633,23 +638,20 @@ const LiveScoreScreen = ({
       </section>
 
       {/* Résultats Intermédiaires Card */}
-      <div 
-        className="bg-surface-high/80 border border-text/10 rounded-xl p-2 flex flex-col gap-1 shadow-sm"
-        style={{ paddingTop: '31px', marginLeft: '0px', marginTop: '16px' }}
-      >
+      <div className="bg-surface-high/80 border border-text/10 rounded-2xl p-3 flex flex-col gap-2 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <ListOrdered className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-text-muted">
+          <div className="flex items-center gap-1.5">
+            <ListOrdered className="w-4 h-4 text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-text-muted">
               Résultats Intermédiaires
             </span>
           </div>
-          <span className="text-[8px] font-bold text-text-dim uppercase">
+          <span className="text-[9px] font-bold text-text-dim uppercase">
             {totalPeriods} {totalPeriods > 1 ? 'Périodes' : 'Période'} ({Math.round(getPeriodDuration(matchFormat, customPeriodDuration) / 60)}m)
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-0.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5">
           {periodScores.map((p: PeriodScore, idx: number) => {
             const isCurrent = idx === currentPeriodIndex;
             const shortName = getPeriodShortName(idx, matchFormat);
@@ -657,18 +659,18 @@ const LiveScoreScreen = ({
             return (
               <div 
                 key={idx}
-                className={`flex flex-col p-1.5 rounded-lg border transition-all ${
+                className={`flex flex-col p-2 rounded-xl border transition-all ${
                   isCurrent 
                     ? 'bg-primary/10 border-primary/60 text-text shadow-sm' 
                     : 'bg-surface-high/60 border-text/5 text-text-muted'
                 }`}
               >
-                <div className="flex items-center justify-between gap-1 mb-0.5">
-                  <span className={`text-[8px] font-black uppercase tracking-wider ${isCurrent ? 'text-primary' : 'text-text-muted'}`}>
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isCurrent ? 'text-primary' : 'text-text-muted'}`}>
                     {shortName}
                   </span>
                   {isCurrent ? (
-                    <span className="text-[7px] font-black bg-primary text-on-primary px-1 py-0.2 rounded uppercase">
+                    <span className="text-[8px] font-black bg-primary text-on-primary px-1.5 py-0.5 rounded uppercase">
                       En cours
                     </span>
                   ) : (
@@ -678,47 +680,51 @@ const LiveScoreScreen = ({
                         setSeconds(idx * dur);
                         setIsActive(false);
                       }}
-                      className="text-[7px] font-bold text-text-dim hover:text-primary transition-colors underline"
+                      className="text-[8px] font-bold text-text-dim hover:text-primary transition-colors underline"
                     >
                       Aller à
                     </button>
                   )}
                 </div>
 
-                <div className="flex items-center justify-between bg-surface/70 rounded px-1.5 py-0.5 border border-text/5 gap-0.5">
-                  <div className="flex items-center gap-0.5">
+                <div className="flex items-center justify-between bg-surface/70 rounded-lg px-2 py-1 border border-text/5 gap-1">
+                  <div className="flex items-center gap-1">
                     <button 
                       onClick={() => handlePeriodScoreUpdate(idx, 'home', -1)}
-                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[9px] font-bold"
+                      className="w-4 h-4 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[10px] font-bold"
                       title="Moins Domicile"
+                      aria-label="Moins Domicile"
                     >
                       -
                     </button>
-                    <span className="text-[11px] font-black text-primary tabular-nums min-w-[10px] text-center">{p.home}</span>
+                    <span className="text-xs font-black text-primary tabular-nums min-w-[12px] text-center">{p.home}</span>
                     <button 
                       onClick={() => handlePeriodScoreUpdate(idx, 'home', 1)}
-                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[9px] font-bold"
+                      className="w-4 h-4 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[10px] font-bold"
                       title="Plus Domicile"
+                      aria-label="Plus Domicile"
                     >
                       +
                     </button>
                   </div>
 
-                  <span className="text-[9px] font-bold text-text-dim">-</span>
+                  <span className="text-[10px] font-bold text-text-dim">-</span>
 
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex items-center gap-1">
                     <button 
                       onClick={() => handlePeriodScoreUpdate(idx, 'away', -1)}
-                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[9px] font-bold"
+                      className="w-4 h-4 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[10px] font-bold"
                       title="Moins Extérieur"
+                      aria-label="Moins Extérieur"
                     >
                       -
                     </button>
-                    <span className="text-[11px] font-black text-secondary tabular-nums min-w-[10px] text-center">{p.away}</span>
+                    <span className="text-xs font-black text-secondary tabular-nums min-w-[12px] text-center">{p.away}</span>
                     <button 
                       onClick={() => handlePeriodScoreUpdate(idx, 'away', 1)}
-                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[9px] font-bold"
+                      className="w-4 h-4 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[10px] font-bold"
                       title="Plus Extérieur"
+                      aria-label="Plus Extérieur"
                     >
                       +
                     </button>
@@ -731,27 +737,25 @@ const LiveScoreScreen = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-2 gap-2 mt-0.5">
+      <div className="grid grid-cols-2 gap-2.5 mt-1">
         <button 
           onClick={handleShare}
-          className="bg-surface-high hover:bg-surface-bright border border-text/10 h-9 rounded-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all group shadow-sm"
-          style={{ marginTop: '15px' }}
+          className="bg-surface-high hover:bg-surface-bright border border-text/10 h-11 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all group shadow-sm"
           title="Partager le score"
         >
-          <Share2 className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
-          <span className="font-headline font-bold text-text uppercase tracking-wider text-[10px]">
+          <Share2 className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+          <span className="font-headline font-bold text-text uppercase tracking-wider text-[11px]">
             Partager
           </span>
         </button>
         <button 
           onClick={resetMatch}
-          className="bg-gradient-to-r from-primary to-primary-container h-9 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(0,227,253,0.2)] hover:scale-[1.02] active:scale-95 transition-all group"
-          style={{ marginTop: '15px', width: '167px' }}
+          className="bg-gradient-to-r from-primary to-primary-container h-11 rounded-xl flex items-center justify-center gap-2 shadow-[0_4px_14px_rgba(0,227,253,0.2)] hover:scale-[1.02] active:scale-95 transition-all group"
         >
-          <span className="font-headline font-black text-on-primary uppercase tracking-wider text-[10px]">
+          <span className="font-headline font-black text-on-primary uppercase tracking-wider text-[11px]">
             Fin du Match
           </span>
-          <Flag className="w-3.5 h-3.5 text-on-primary/50 group-hover:translate-x-1 transition-transform" />
+          <Flag className="w-4 h-4 text-on-primary/50 group-hover:translate-x-1 transition-transform" />
         </button>
       </div>
 
@@ -796,8 +800,7 @@ const HomeScreen = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="flex flex-col gap-3 w-full py-0.5"
-      style={{ paddingTop: '21px' }}
+      className="flex flex-col gap-3.5 w-full py-1"
     >
       {/* Last Match Result Card */}
       <AnimatePresence>
@@ -853,58 +856,58 @@ const HomeScreen = ({
       <section className="flex flex-col gap-3">
         {/* Home Team Input */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[9px] font-black text-primary uppercase tracking-[0.2em] ml-1">Équipe Domicile</label>
+          <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Équipe Domicile</label>
           <div className="relative">
             <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
             <input 
               type="text" 
               value={homeTeamName}
               onChange={(e) => setHomeTeamName(e.target.value)}
-              placeholder="Nom de l'équipe"
-              className="w-full bg-surface-high border border-text/5 rounded-xl py-2 pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-primary/50 transition-all placeholder:text-text-dim"
+              placeholder="Nom de l'équipe domicile"
+              className="w-full h-11 bg-surface-high border border-text/10 rounded-xl pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-primary/50 transition-all placeholder:text-text-dim/60 shadow-sm"
             />
           </div>
         </div>
 
         {/* Away Team Input */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[9px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Équipe Extérieur</label>
+          <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Équipe Extérieur</label>
           <div className="relative">
             <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
             <input 
               type="text" 
               value={awayTeamName}
               onChange={(e) => setAwayTeamName(e.target.value)}
-              placeholder="Nom de l'équipe"
-              className="w-full bg-surface-high border border-text/5 rounded-xl py-2 pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-secondary/50 transition-all placeholder:text-text-dim"
+              placeholder="Nom de l'équipe extérieur"
+              className="w-full h-11 bg-surface-high border border-text/10 rounded-xl pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-secondary/50 transition-all placeholder:text-text-dim/60 shadow-sm"
             />
           </div>
         </div>
 
         {/* Match Format Selection */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[9px] font-black text-text-dim uppercase tracking-[0.2em] ml-1">Format du Match</label>
-          <div className="grid grid-cols-3 gap-1.5">
+          <label className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em] ml-1">Format du Match</label>
+          <div className="grid grid-cols-3 gap-2">
             <button 
               onClick={() => setMatchFormat('adults')}
-              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'adults' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all min-h-[52px] ${matchFormat === 'adults' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/10 text-text-muted hover:text-text'}`}
             >
-              <span className="text-[8px] font-black uppercase tracking-wider">Adultes</span>
-              <span className="text-[10px] font-bold mt-0.5">2 × 45m</span>
+              <span className="text-[9px] font-black uppercase tracking-wider">Adultes</span>
+              <span className="text-[11px] font-bold mt-0.5">2 × 45m</span>
             </button>
             <button 
               onClick={() => setMatchFormat('kids')}
-              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'kids' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all min-h-[52px] ${matchFormat === 'kids' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/10 text-text-muted hover:text-text'}`}
             >
-              <span className="text-[8px] font-black uppercase tracking-wider">Jeunes</span>
-              <span className="text-[10px] font-bold mt-0.5">3 × 15m</span>
+              <span className="text-[9px] font-black uppercase tracking-wider">Jeunes</span>
+              <span className="text-[11px] font-bold mt-0.5">3 × 15m</span>
             </button>
             <button 
               onClick={() => setMatchFormat('custom')}
-              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'custom' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
+              className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all min-h-[52px] ${matchFormat === 'custom' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/10 text-text-muted hover:text-text'}`}
             >
-              <span className="text-[8px] font-black uppercase tracking-wider">Sur Mesure</span>
-              <span className="text-[10px] font-bold mt-0.5">{customPeriodCount} × {customPeriodDuration}m</span>
+              <span className="text-[9px] font-black uppercase tracking-wider">Sur Mesure</span>
+              <span className="text-[11px] font-bold mt-0.5">{customPeriodCount} × {customPeriodDuration}m</span>
             </button>
           </div>
         </div>
@@ -920,38 +923,42 @@ const HomeScreen = ({
             >
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[8px] font-black text-text-dim uppercase tracking-widest ml-1">Périodes</label>
-                  <div className="flex items-center gap-1.5 bg-surface-high rounded-lg p-1 border border-text/5">
+                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">Périodes</label>
+                  <div className="flex items-center gap-2 bg-surface-high rounded-xl p-1.5 border border-text/10 shadow-sm">
                     <button 
                       onClick={() => setCustomPeriodCount((c: number) => Math.max(1, c - 1))}
-                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted hover:text-text"
+                      aria-label="Moins de périodes"
                     >
-                      <Minus className="w-3.5 h-3.5" />
+                      <Minus className="w-4 h-4" />
                     </button>
-                    <span className="flex-1 text-center font-bold text-xs text-text tabular-nums">{customPeriodCount}</span>
+                    <span className="flex-1 text-center font-bold text-sm text-text tabular-nums">{customPeriodCount}</span>
                     <button 
                       onClick={() => setCustomPeriodCount((c: number) => Math.min(10, c + 1))}
-                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted hover:text-text"
+                      aria-label="Plus de périodes"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[8px] font-black text-text-dim uppercase tracking-widest ml-1">Min / Période</label>
-                  <div className="flex items-center gap-1.5 bg-surface-high rounded-lg p-1 border border-text/5">
+                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">Min / Période</label>
+                  <div className="flex items-center gap-2 bg-surface-high rounded-xl p-1.5 border border-text/10 shadow-sm">
                     <button 
                       onClick={() => setCustomPeriodDuration((d: number) => Math.max(1, d - 5))}
-                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted hover:text-text"
+                      aria-label="Moins de minutes"
                     >
-                      <Minus className="w-3.5 h-3.5" />
+                      <Minus className="w-4 h-4" />
                     </button>
-                    <span className="flex-1 text-center font-bold text-xs text-text tabular-nums">{customPeriodDuration}</span>
+                    <span className="flex-1 text-center font-bold text-sm text-text tabular-nums">{customPeriodDuration}</span>
                     <button 
                       onClick={() => setCustomPeriodDuration((d: number) => Math.min(120, d + 5))}
-                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
+                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted hover:text-text"
+                      aria-label="Plus de minutes"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -963,7 +970,7 @@ const HomeScreen = ({
 
       <button 
         onClick={() => setCurrentPage('live')}
-        className="w-full mt-1 bg-primary h-11 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(129,236,255,0.15)] hover:brightness-110 active:scale-95 transition-all group"
+        className="w-full mt-2 bg-primary h-12 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(0,227,253,0.2)] hover:brightness-110 active:scale-95 transition-all group"
       >
         <span className="font-headline font-black text-on-primary uppercase tracking-[0.2em] text-xs">
           Rejoindre le Live
