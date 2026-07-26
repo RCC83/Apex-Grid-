@@ -21,25 +21,147 @@ import {
   X,
   ChevronLeft,
   Sun,
-  Moon
+  Moon,
+  Share2,
+  ListOrdered
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 type Page = 'home' | 'live';
+
+export interface PeriodScore {
+  home: number;
+  away: number;
+}
+
+export const getTotalPeriods = (format: 'kids' | 'adults' | 'custom', customCount: number) => {
+  if (format === 'adults') return 2;
+  if (format === 'kids') return 3;
+  return customCount;
+};
+
+export const getPeriodDuration = (format: 'kids' | 'adults' | 'custom', customDuration: number) => {
+  if (format === 'adults') return 45 * 60;
+  if (format === 'kids') return 15 * 60;
+  return customDuration * 60;
+};
+
+export const getPeriodName = (index: number, format: 'kids' | 'adults' | 'custom') => {
+  if (format === 'adults') {
+    return index === 0 ? '1ère Mi-temps' : '2ème Mi-temps';
+  } else if (format === 'kids') {
+    return `${index + 1}${index === 0 ? 'er' : 'ème'} Tiers`;
+  } else {
+    return `Période ${index + 1}`;
+  }
+};
+
+export const getPeriodShortName = (index: number, format: 'kids' | 'adults' | 'custom') => {
+  if (format === 'adults') {
+    return index === 0 ? '1MT' : '2MT';
+  } else if (format === 'kids') {
+    return `T${index + 1}`;
+  } else {
+    return `P${index + 1}`;
+  }
+};
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [homeTeamName, setHomeTeamName] = useState('');
   const [awayTeamName, setAwayTeamName] = useState('');
-  const [homeScore, setHomeScore] = useState(0);
-  const [awayScore, setAwayScore] = useState(0);
   const [seconds, setSeconds] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [matchFormat, setMatchFormat] = useState<'kids' | 'adults' | 'custom'>('custom');
   const [customPeriodCount, setCustomPeriodCount] = useState(2);
   const [customPeriodDuration, setCustomPeriodDuration] = useState(45);
   const [isMatchFinished, setIsMatchFinished] = useState(false);
+
+  const totalPeriods = getTotalPeriods(matchFormat, customPeriodCount);
+  const periodDuration = getPeriodDuration(matchFormat, customPeriodDuration);
+  const currentPeriodIndex = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDuration)));
+
+  const [periodScores, setPeriodScores] = useState<PeriodScore[]>([
+    { home: 0, away: 0 },
+    { home: 0, away: 0 }
+  ]);
+
+  useEffect(() => {
+    setPeriodScores((prev) => {
+      if (prev.length === totalPeriods) return prev;
+      const next = [...prev];
+      if (next.length < totalPeriods) {
+        while (next.length < totalPeriods) {
+          next.push({ home: 0, away: 0 });
+        }
+      } else {
+        next.length = totalPeriods;
+      }
+      return next;
+    });
+  }, [totalPeriods]);
+
+  const homeScore = periodScores.reduce((sum, p) => sum + (p?.home || 0), 0);
+  const awayScore = periodScores.reduce((sum, p) => sum + (p?.away || 0), 0);
+
+  const handleHomeScoreChange = (delta: number) => {
+    setPeriodScores((prev) => {
+      const next = [...prev];
+      while (next.length < totalPeriods) {
+        next.push({ home: 0, away: 0 });
+      }
+      const idx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDuration)));
+      const curr = next[idx]?.home || 0;
+      if (delta < 0 && curr === 0) {
+        for (let i = idx - 1; i >= 0; i--) {
+          if (next[i].home > 0) {
+            next[i] = { ...next[i], home: next[i].home - 1 };
+            break;
+          }
+        }
+      } else {
+        next[idx] = { ...next[idx], home: Math.max(0, curr + delta) };
+      }
+      return next;
+    });
+  };
+
+  const handleAwayScoreChange = (delta: number) => {
+    setPeriodScores((prev) => {
+      const next = [...prev];
+      while (next.length < totalPeriods) {
+        next.push({ home: 0, away: 0 });
+      }
+      const idx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDuration)));
+      const curr = next[idx]?.away || 0;
+      if (delta < 0 && curr === 0) {
+        for (let i = idx - 1; i >= 0; i--) {
+          if (next[i].away > 0) {
+            next[i] = { ...next[i], away: next[i].away - 1 };
+            break;
+          }
+        }
+      } else {
+        next[idx] = { ...next[idx], away: Math.max(0, curr + delta) };
+      }
+      return next;
+    });
+  };
+
+  const handlePeriodScoreUpdate = (periodIndex: number, team: 'home' | 'away', delta: number) => {
+    setPeriodScores((prev) => {
+      const next = [...prev];
+      if (next[periodIndex]) {
+        const currentVal = next[periodIndex][team];
+        next[periodIndex] = {
+          ...next[periodIndex],
+          [team]: Math.max(0, currentVal + delta)
+        };
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (theme === 'light') {
@@ -72,8 +194,7 @@ export default function App() {
   };
 
   const clearAll = () => {
-    setHomeScore(0);
-    setAwayScore(0);
+    setPeriodScores(Array(totalPeriods).fill(null).map(() => ({ home: 0, away: 0 })));
     setSeconds(0);
     setIsActive(false);
     setIsMatchFinished(false);
@@ -82,38 +203,28 @@ export default function App() {
   };
 
   const getPeriodLabel = () => {
-    if (matchFormat === 'kids') {
-      if (seconds < 900) return '1ère Période (1/3)';
-      if (seconds < 1800) return '2ème Période (2/3)';
-      return '3ème Période (3/3)';
-    } else if (matchFormat === 'adults') {
-      if (seconds < 2700) return '1ère Mi-temps (1/2)';
-      return '2ème Mi-temps (2/2)';
-    } else {
-      const durationInSeconds = customPeriodDuration * 60;
-      const currentPeriod = Math.min(customPeriodCount, Math.floor(seconds / durationInSeconds) + 1);
-      return `${currentPeriod}${currentPeriod === 1 ? 'ère' : 'ème'} Période (${currentPeriod}/${customPeriodCount})`;
-    }
+    const pName = getPeriodName(currentPeriodIndex, matchFormat);
+    return `${pName} (${currentPeriodIndex + 1}/${totalPeriods})`;
   };
 
   return (
-    <div className="min-h-screen flex flex-col max-w-md mx-auto relative overflow-hidden bg-surface text-text">
+    <div className="min-h-screen flex flex-col max-w-[360px] mx-auto relative overflow-hidden bg-surface text-text">
       {/* Header */}
-      <header className="fixed top-0 w-full max-w-md z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)]">
-        <div className="relative flex items-center justify-between px-4 h-14">
+      <header className="fixed top-0 w-full max-w-[360px] z-50 bg-surface/80 backdrop-blur-xl border-b border-white/5 pt-[env(safe-area-inset-top)]">
+        <div className="relative flex items-center justify-between px-3 h-12">
           {/* Logo Section (Left) */}
           <motion.div 
             whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-3 z-10 cursor-pointer"
+            className="flex items-center gap-2 z-10 cursor-pointer"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-[0_4px_15px_rgba(0,227,253,0.3)] border border-white/10">
-              <Trophy className="w-6 h-6 text-on-primary" />
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-[0_3px_10px_rgba(0,227,253,0.25)] border border-white/10">
+              <Trophy className="w-4 h-4 text-on-primary" />
             </div>
-            <div className="flex flex-col -space-y-1">
-              <span className="text-text font-headline font-black italic tracking-tighter text-[14px] leading-none">
+            <div className="flex flex-col -space-y-0.5">
+              <span className="text-text font-headline font-black italic tracking-tighter text-[12px] leading-none">
                 MATCH
               </span>
-              <span className="text-primary font-headline font-black italic tracking-tighter text-[14px] leading-none">
+              <span className="text-primary font-headline font-black italic tracking-tighter text-[12px] leading-none">
                 COMPTEUR
               </span>
             </div>
@@ -123,15 +234,15 @@ export default function App() {
           <div className="flex items-center z-10">
             <button 
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="p-2.5 rounded-xl bg-surface-bright text-text-muted hover:text-primary transition-all active:scale-90"
+              className="p-2 rounded-lg bg-surface-bright text-text-muted hover:text-primary transition-all active:scale-90"
             >
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>
       </header>
 
-      <main className="pt-[calc(4rem+env(safe-area-inset-top))] pb-20 px-4 flex-1 flex flex-col justify-center">
+      <main className="pt-13 pb-12 px-3 flex-1 flex flex-col justify-start">
         <AnimatePresence mode="wait">
           {currentPage === 'live' ? (
             <LiveScoreScreen 
@@ -148,9 +259,13 @@ export default function App() {
               homeTeamName={homeTeamName}
               awayTeamName={awayTeamName}
               homeScore={homeScore}
-              setHomeScore={setHomeScore}
               awayScore={awayScore}
-              setAwayScore={setAwayScore}
+              periodScores={periodScores}
+              totalPeriods={totalPeriods}
+              currentPeriodIndex={currentPeriodIndex}
+              handleHomeScoreChange={handleHomeScoreChange}
+              handleAwayScoreChange={handleAwayScoreChange}
+              handlePeriodScoreUpdate={handlePeriodScoreUpdate}
               resetMatch={resetMatch}
             />
           ) : (
@@ -162,6 +277,7 @@ export default function App() {
               setAwayTeamName={setAwayTeamName}
               homeScore={homeScore}
               awayScore={awayScore}
+              periodScores={periodScores}
               isMatchFinished={isMatchFinished}
               clearAll={clearAll}
               matchFormat={matchFormat}
@@ -177,21 +293,21 @@ export default function App() {
       </main>
 
       {/* Bottom Nav */}
-      <nav className="fixed bottom-0 w-full max-w-md z-50 bg-surface/90 backdrop-blur-2xl border-t border-white/5 rounded-t-3xl shadow-2xl">
-        <div className="flex justify-around items-center h-16 px-6 w-full">
+      <nav className="fixed bottom-0 w-full max-w-[360px] z-50 bg-surface/90 backdrop-blur-2xl border-t border-white/5 rounded-t-xl shadow-2xl">
+        <div className="flex justify-around items-center h-11 px-3 w-full">
           <button 
             onClick={() => setCurrentPage('home')}
-            className={`flex flex-col items-center gap-1 transition-all ${currentPage === 'home' ? 'text-primary bg-primary/10 px-6 py-2 rounded-2xl' : 'text-text-muted hover:text-primary'}`}
+            className={`flex items-center gap-1.5 transition-all ${currentPage === 'home' ? 'text-primary bg-primary/10 px-4 py-1 rounded-lg' : 'text-text-muted hover:text-primary px-3 py-1'}`}
           >
-            <Home className="w-6 h-6" />
-            <span className="font-headline font-bold text-[9px] uppercase tracking-widest">Accueil</span>
+            <Home className="w-4 h-4" />
+            <span className="font-headline font-bold text-[9px] uppercase tracking-wider">Accueil</span>
           </button>
           <button 
             onClick={() => setCurrentPage('live')}
-            className={`flex flex-col items-center gap-1 transition-all ${currentPage === 'live' ? 'text-primary bg-primary/10 px-6 py-2 rounded-2xl' : 'text-text-muted hover:text-primary'}`}
+            className={`flex items-center gap-1.5 transition-all ${currentPage === 'live' ? 'text-primary bg-primary/10 px-4 py-1 rounded-lg' : 'text-text-muted hover:text-primary px-3 py-1'}`}
           >
-            <Timer className="w-6 h-6" />
-            <span className="font-headline font-bold text-[9px] uppercase tracking-widest">Live Score</span>
+            <Timer className="w-4 h-4" />
+            <span className="font-headline font-bold text-[9px] uppercase tracking-wider">Live Score</span>
           </button>
         </div>
       </nav>
@@ -212,14 +328,56 @@ const LiveScoreScreen = ({
   homeTeamName,
   awayTeamName,
   homeScore,
-  setHomeScore,
   awayScore,
-  setAwayScore,
+  periodScores,
+  totalPeriods,
+  currentPeriodIndex,
+  handleHomeScoreChange,
+  handleAwayScoreChange,
+  handlePeriodScoreUpdate,
   resetMatch
 }: any) => {
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [editMinutes, setEditMinutes] = useState(Math.floor(seconds / 60).toString());
   const [editSeconds, setEditSeconds] = useState((seconds % 60).toString());
+  const [showShareToast, setShowShareToast] = useState(false);
+
+  const handleShare = async () => {
+    const home = homeTeamName.trim() || 'DOMICILE';
+    const away = awayTeamName.trim() || 'EXTÉRIEUR';
+    const period = getPeriodLabel();
+    const time = formatTime(seconds);
+    const title = `Match Compteur - ${home} vs ${away}`;
+
+    const breakdownText = periodScores
+      .map((p: PeriodScore, i: number) => `${getPeriodShortName(i, matchFormat)}: ${p.home}-${p.away}`)
+      .join(' | ');
+
+    const shareText = `⚽ ${home} ${homeScore} - ${awayScore} ${away}\n📊 Score par période: ${breakdownText}\n⏱️ ${period} (${time})\n\nSuivez le match sur Match Compteur !`;
+    const shareUrl = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error('Share error:', err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
+        setShowShareToast(true);
+        setTimeout(() => setShowShareToast(false), 3000);
+      } catch (err) {
+        console.error('Clipboard copy error:', err);
+      }
+    }
+  };
 
   const handleSetTime = () => {
     const mins = parseInt(editMinutes) || 0;
@@ -229,31 +387,15 @@ const LiveScoreScreen = ({
   };
 
   const handlePeriodChange = (direction: 'next' | 'prev') => {
-    let duration = 45; // Default
-    let count = 2;
-
-    if (matchFormat === 'kids') {
-      duration = 15;
-      count = 3;
-    } else if (matchFormat === 'adults') {
-      duration = 45;
-      count = 2;
-    } else {
-      duration = customPeriodDuration;
-      count = customPeriodCount;
-    }
-
-    const durationInSeconds = duration * 60;
-    const currentPeriod = Math.floor(seconds / durationInSeconds);
-    
+    const durationInSeconds = getPeriodDuration(matchFormat, customPeriodDuration);
     let nextSeconds = seconds;
     if (direction === 'next') {
-      if (currentPeriod < count - 1) {
-        nextSeconds = (currentPeriod + 1) * durationInSeconds;
+      if (currentPeriodIndex < totalPeriods - 1) {
+        nextSeconds = (currentPeriodIndex + 1) * durationInSeconds;
       }
     } else {
-      if (currentPeriod > 0) {
-        nextSeconds = (currentPeriod - 1) * durationInSeconds;
+      if (currentPeriodIndex > 0) {
+        nextSeconds = (currentPeriodIndex - 1) * durationInSeconds;
       } else {
         nextSeconds = 0;
       }
@@ -274,11 +416,11 @@ const LiveScoreScreen = ({
       <motion.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-surface-high rounded-2xl p-3 flex items-center justify-between shadow-2xl border border-text/5"
+        className="bg-surface-high rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-text/5"
       >
-        <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="font-headline text-primary text-4xl font-bold tracking-tight tabular-nums leading-none">
+            <span className="font-headline text-primary text-3xl font-bold tracking-tight tabular-nums leading-none">
               {formatTime(seconds)}
             </span>
             <button 
@@ -313,20 +455,20 @@ const LiveScoreScreen = ({
         <div className="flex items-center gap-1.5">
           <button 
             onClick={() => setIsActive(!isActive)}
-            className={`h-11 px-5 flex items-center justify-center gap-2 rounded-2xl transition-all active:scale-95 font-headline font-black text-[9px] uppercase tracking-[0.2em] ${
+            className={`h-9 px-3.5 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 font-headline font-black text-[9px] uppercase tracking-[0.2em] ${
               isActive 
                 ? 'bg-text/5 text-text-muted border border-text/5 hover:bg-text/10' 
-                : 'bg-primary text-on-primary shadow-[0_8px_20px_rgba(0,227,253,0.2)] hover:brightness-110'
+                : 'bg-primary text-on-primary shadow-[0_4px_12px_rgba(0,227,253,0.2)] hover:brightness-110'
             }`}
           >
             {isActive ? (
               <>
-                <Pause className="w-3.5 h-3.5" />
+                <Pause className="w-3 h-3" />
                 <span>Pause</span>
               </>
             ) : (
               <>
-                <Play className="w-3.5 h-3.5 fill-current" />
+                <Play className="w-3 h-3 fill-current" />
                 <span>{seconds > 0 ? 'PLAY' : 'START'}</span>
               </>
             )}
@@ -336,10 +478,10 @@ const LiveScoreScreen = ({
               setSeconds(0);
               setIsActive(false);
             }}
-            className="w-11 h-11 flex items-center justify-center rounded-2xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
             title="Réinitialiser"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5" />
           </button>
         </div>
       </motion.section>
@@ -400,110 +542,223 @@ const LiveScoreScreen = ({
         )}
       </AnimatePresence>
 
-      {/* Score Display */}
-      <section className="flex flex-col items-center justify-center py-1">
-        <div className="flex items-center justify-between w-full px-2 gap-2">
-          <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-            <div className="h-4 flex items-center justify-center w-full overflow-hidden">
-              <span className="text-[11px] font-black uppercase tracking-wider text-primary text-center truncate w-full">
+      {/* Score Display with Inline + / - Controls */}
+      <section className="bg-surface-high/80 border border-text/10 rounded-xl p-2.5 shadow-md flex flex-col gap-1">
+        <div className="flex items-center justify-between w-full px-1 gap-2">
+          {/* Home Team Column */}
+          <div className="flex flex-col items-center flex-1 min-w-0">
+            <div className="h-3.5 flex items-center justify-center w-full overflow-hidden mb-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-primary text-center truncate w-full">
                 {homeTeamName || 'DOMICILE'}
               </span>
             </div>
-            <div className="h-[60px] relative flex items-center justify-center w-full overflow-hidden">
-              <AnimatePresence mode="popLayout">
-                <motion.span 
-                  key={homeScore}
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -10, opacity: 0 }}
-                  className="font-headline text-6xl font-black text-text tabular-nums"
-                >
-                  {homeScore}
-                </motion.span>
-              </AnimatePresence>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button 
+                onClick={() => handleHomeScoreChange(-1)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+                title="-1 Domicile"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <div className="h-[44px] relative flex items-center justify-center min-w-[32px] overflow-hidden">
+                <AnimatePresence mode="popLayout">
+                  <motion.span 
+                    key={homeScore}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    className="font-headline text-4xl sm:text-5xl font-black text-text tabular-nums px-0.5"
+                  >
+                    {homeScore}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              <button 
+                onClick={() => handleHomeScoreChange(1)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-on-primary shadow-sm hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
+                title="+1 Domicile"
+              >
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-center h-[80px] pt-4">
-            <span className="font-headline text-2xl font-bold text-primary/20">-</span>
+          <div className="flex flex-col items-center justify-center h-[44px] pt-3">
+            <span className="font-headline text-lg font-bold text-primary/20">-</span>
           </div>
 
-          <div className="flex flex-col items-center gap-1 flex-1 min-w-0">
-            <div className="h-4 flex items-center justify-center w-full overflow-hidden">
-              <span className="text-[11px] font-black uppercase tracking-wider text-secondary text-center truncate w-full">
+          {/* Away Team Column */}
+          <div className="flex flex-col items-center flex-1 min-w-0">
+            <div className="h-3.5 flex items-center justify-center w-full overflow-hidden mb-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-secondary text-center truncate w-full">
                 {awayTeamName || 'EXTÉRIEUR'}
               </span>
             </div>
-            <div className="h-[60px] relative flex items-center justify-center w-full overflow-hidden">
-              <AnimatePresence mode="popLayout">
-                <motion.span 
-                  key={awayScore}
-                  initial={{ y: 10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -10, opacity: 0 }}
-                  className="font-headline text-6xl font-black text-text tabular-nums"
-                >
-                  {awayScore}
-                </motion.span>
-              </AnimatePresence>
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button 
+                onClick={() => handleAwayScoreChange(-1)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+                title="-1 Extérieur"
+              >
+                <Minus className="w-3.5 h-3.5" />
+              </button>
+              <div className="h-[44px] relative flex items-center justify-center min-w-[32px] overflow-hidden">
+                <AnimatePresence mode="popLayout">
+                  <motion.span 
+                    key={awayScore}
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -10, opacity: 0 }}
+                    className="font-headline text-4xl sm:text-5xl font-black text-text tabular-nums px-0.5"
+                  >
+                    {awayScore}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
+              <button 
+                onClick={() => handleAwayScoreChange(1)}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary text-on-primary shadow-sm hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
+                title="+1 Extérieur"
+              >
+                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Controls */}
-      <div className="flex flex-col gap-2">
-        <div className="bg-surface-container rounded-2xl p-3 flex items-center justify-between border border-text/5">
-          <span className="font-headline font-bold text-xs tracking-widest text-text-muted uppercase truncate max-w-[120px]">
-            {homeTeamName || 'DOMICILE'}
-          </span>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setHomeScore((s: number) => Math.max(0, s - 1))}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-bright text-text-muted hover:text-text transition-colors border border-text/5"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setHomeScore((s: number) => s + 1)}
-              className="w-14 h-10 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-lg hover:brightness-110 transition-all"
-            >
-              <Plus className="w-6 h-6" />
-            </button>
+      {/* Résultats Intermédiaires Card */}
+      <div className="bg-surface-high/80 border border-text/10 rounded-xl p-2 flex flex-col gap-1 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <ListOrdered className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-text-muted">
+              Résultats Intermédiaires
+            </span>
           </div>
+          <span className="text-[8px] font-bold text-text-dim uppercase">
+            {totalPeriods} {totalPeriods > 1 ? 'Périodes' : 'Période'} ({Math.round(getPeriodDuration(matchFormat, customPeriodDuration) / 60)}m)
+          </span>
         </div>
 
-        <div className="bg-surface-container rounded-2xl p-3 flex items-center justify-between border border-text/5">
-          <span className="font-headline font-bold text-xs tracking-widest text-text-muted uppercase truncate max-w-[120px]">
-            {awayTeamName || 'EXTÉRIEUR'}
-          </span>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setAwayScore((s: number) => Math.max(0, s - 1))}
-              className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-bright text-text-muted hover:text-text transition-colors border border-text/5"
-            >
-              <Minus className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => setAwayScore((s: number) => s + 1)}
-              className="w-14 h-10 flex items-center justify-center rounded-xl bg-primary text-on-primary shadow-lg hover:brightness-110 transition-all"
-            >
-              <Plus className="w-6 h-6" />
-            </button>
-          </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5 pt-0.5">
+          {periodScores.map((p: PeriodScore, idx: number) => {
+            const isCurrent = idx === currentPeriodIndex;
+            const shortName = getPeriodShortName(idx, matchFormat);
+            
+            return (
+              <div 
+                key={idx}
+                className={`flex flex-col p-1.5 rounded-lg border transition-all ${
+                  isCurrent 
+                    ? 'bg-primary/10 border-primary/60 text-text shadow-sm' 
+                    : 'bg-surface-high/60 border-text/5 text-text-muted'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-1 mb-0.5">
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isCurrent ? 'text-primary' : 'text-text-muted'}`}>
+                    {shortName}
+                  </span>
+                  {isCurrent ? (
+                    <span className="text-[7px] font-black bg-primary text-on-primary px-1 py-0.2 rounded uppercase">
+                      En cours
+                    </span>
+                  ) : (
+                    <button 
+                      onClick={() => {
+                        const dur = getPeriodDuration(matchFormat, customPeriodDuration);
+                        setSeconds(idx * dur);
+                        setIsActive(false);
+                      }}
+                      className="text-[7px] font-bold text-text-dim hover:text-primary transition-colors underline"
+                    >
+                      Aller à
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between bg-surface/70 rounded px-1.5 py-0.5 border border-text/5 gap-0.5">
+                  <div className="flex items-center gap-0.5">
+                    <button 
+                      onClick={() => handlePeriodScoreUpdate(idx, 'home', -1)}
+                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[9px] font-bold"
+                      title="Moins Domicile"
+                    >
+                      -
+                    </button>
+                    <span className="text-[11px] font-black text-primary tabular-nums min-w-[10px] text-center">{p.home}</span>
+                    <button 
+                      onClick={() => handlePeriodScoreUpdate(idx, 'home', 1)}
+                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-primary text-[9px] font-bold"
+                      title="Plus Domicile"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <span className="text-[9px] font-bold text-text-dim">-</span>
+
+                  <div className="flex items-center gap-0.5">
+                    <button 
+                      onClick={() => handlePeriodScoreUpdate(idx, 'away', -1)}
+                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[9px] font-bold"
+                      title="Moins Extérieur"
+                    >
+                      -
+                    </button>
+                    <span className="text-[11px] font-black text-secondary tabular-nums min-w-[10px] text-center">{p.away}</span>
+                    <button 
+                      onClick={() => handlePeriodScoreUpdate(idx, 'away', 1)}
+                      className="w-3.5 h-3.5 rounded flex items-center justify-center bg-surface-bright text-text-dim hover:text-secondary text-[9px] font-bold"
+                      title="Plus Extérieur"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Action Button */}
-      <button 
-        onClick={resetMatch}
-        className="w-full mt-0 bg-gradient-to-r from-primary to-primary-container h-14 rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,227,253,0.2)] hover:scale-[1.02] active:scale-95 transition-all group"
-      >
-        <span className="font-headline font-black text-on-primary uppercase tracking-[0.2em] text-sm">
-          Fin du Match
-        </span>
-        <Flag className="w-6 h-6 text-on-primary/40 group-hover:translate-x-1 transition-transform" />
-      </button>
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-2 mt-0.5">
+        <button 
+          onClick={handleShare}
+          className="bg-surface-high hover:bg-surface-bright border border-text/10 h-9 rounded-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all group shadow-sm"
+          title="Partager le score"
+        >
+          <Share2 className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
+          <span className="font-headline font-bold text-text uppercase tracking-wider text-[10px]">
+            Partager
+          </span>
+        </button>
+        <button 
+          onClick={resetMatch}
+          className="bg-gradient-to-r from-primary to-primary-container h-9 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(0,227,253,0.2)] hover:scale-[1.02] active:scale-95 transition-all group"
+        >
+          <span className="font-headline font-black text-on-primary uppercase tracking-wider text-[10px]">
+            Fin du Match
+          </span>
+          <Flag className="w-3.5 h-3.5 text-on-primary/50 group-hover:translate-x-1 transition-transform" />
+        </button>
+      </div>
+
+      {/* Copy Toast Notification */}
+      <AnimatePresence>
+        {showShareToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-surface-high border border-primary/40 text-text px-4 py-2.5 rounded-xl shadow-2xl text-xs font-bold flex items-center gap-2 backdrop-blur-md"
+          >
+            <Check className="w-4 h-4 text-primary" />
+            <span>Score copié dans le presse-papier !</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -515,6 +770,7 @@ const HomeScreen = ({
   setAwayTeamName, 
   homeScore,
   awayScore,
+  periodScores,
   isMatchFinished,
   clearAll,
   matchFormat, 
@@ -555,7 +811,7 @@ const HomeScreen = ({
               
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1 text-right">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted truncate">{homeTeamName}</span>
+                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted truncate">{homeTeamName || 'DOMICILE'}</span>
                 </div>
                 <div className="flex items-center gap-3 bg-surface-high px-4 py-2 rounded-xl border border-text/5 shadow-inner">
                   <span className="text-2xl font-black text-primary tabular-nums">{homeScore}</span>
@@ -563,55 +819,81 @@ const HomeScreen = ({
                   <span className="text-2xl font-black text-secondary tabular-nums">{awayScore}</span>
                 </div>
                 <div className="flex-1 text-left">
-                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted truncate">{awayTeamName}</span>
+                  <span className="block text-xs font-bold uppercase tracking-wider text-text-muted truncate">{awayTeamName || 'EXTÉRIEUR'}</span>
                 </div>
               </div>
+
+              {/* Period Breakdown */}
+              {periodScores && periodScores.length > 0 && (
+                <div className="flex items-center justify-center gap-1.5 flex-wrap pt-2 border-t border-primary/10">
+                  {periodScores.map((p: PeriodScore, i: number) => (
+                    <span key={i} className="text-[10px] font-bold bg-surface-high/80 px-2.5 py-1 rounded-lg border border-text/5 text-text-muted flex items-center gap-1">
+                      <span className="text-text-dim uppercase text-[9px]">{getPeriodShortName(i, matchFormat)}:</span>
+                      <strong className="text-primary">{p.home}</strong>-<strong className="text-secondary">{p.away}</strong>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </motion.section>
         )}
       </AnimatePresence>
 
-      <section className="flex flex-col gap-4">
+      <section className="flex flex-col gap-3">
         {/* Home Team Input */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-primary uppercase tracking-[0.2em] ml-1">Équipe Domicile</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-primary uppercase tracking-[0.2em] ml-1">Équipe Domicile</label>
           <div className="relative">
-            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
+            <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
             <input 
               type="text" 
               value={homeTeamName}
               onChange={(e) => setHomeTeamName(e.target.value)}
               placeholder="Nom de l'équipe"
-              className="w-full bg-surface-high border border-text/5 rounded-2xl py-3 pl-12 pr-4 text-text font-headline font-bold focus:outline-none focus:border-primary/50 transition-all placeholder:text-text-dim"
+              className="w-full bg-surface-high border border-text/5 rounded-xl py-2 pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-primary/50 transition-all placeholder:text-text-dim"
             />
           </div>
         </div>
 
         {/* Away Team Input */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Équipe Extérieur</label>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-secondary uppercase tracking-[0.2em] ml-1">Équipe Extérieur</label>
           <div className="relative">
-            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
+            <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-dim" />
             <input 
               type="text" 
               value={awayTeamName}
               onChange={(e) => setAwayTeamName(e.target.value)}
               placeholder="Nom de l'équipe"
-              className="w-full bg-surface-high border border-text/5 rounded-2xl py-3 pl-12 pr-4 text-text font-headline font-bold focus:outline-none focus:border-secondary/50 transition-all placeholder:text-text-dim"
+              className="w-full bg-surface-high border border-text/5 rounded-xl py-2 pl-10 pr-3 text-xs text-text font-headline font-bold focus:outline-none focus:border-secondary/50 transition-all placeholder:text-text-dim"
             />
           </div>
         </div>
 
         {/* Match Format Selection */}
-        <div className="flex flex-col gap-2">
-          <label className="text-[10px] font-black text-text-dim uppercase tracking-[0.2em] ml-1">Format du Match</label>
-          <div className="grid grid-cols-1 gap-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[9px] font-black text-text-dim uppercase tracking-[0.2em] ml-1">Format du Match</label>
+          <div className="grid grid-cols-3 gap-1.5">
+            <button 
+              onClick={() => setMatchFormat('adults')}
+              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'adults' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
+            >
+              <span className="text-[8px] font-black uppercase tracking-wider">Adultes</span>
+              <span className="text-[10px] font-bold mt-0.5">2 × 45m</span>
+            </button>
+            <button 
+              onClick={() => setMatchFormat('kids')}
+              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'kids' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
+            >
+              <span className="text-[8px] font-black uppercase tracking-wider">Jeunes</span>
+              <span className="text-[10px] font-bold mt-0.5">3 × 15m</span>
+            </button>
             <button 
               onClick={() => setMatchFormat('custom')}
-              className={`flex flex-col items-center p-3 rounded-2xl border transition-all ${matchFormat === 'custom' ? 'bg-primary/10 border-primary text-primary' : 'bg-surface-high border-text/5 text-text-muted'}`}
+              className={`flex flex-col items-center p-2 rounded-xl border text-center transition-all ${matchFormat === 'custom' ? 'bg-primary/10 border-primary text-primary shadow-sm' : 'bg-surface-high border-text/5 text-text-muted hover:text-text'}`}
             >
-              <span className="text-[9px] font-black uppercase tracking-widest">Personnalisé</span>
-              <span className="text-[12px] font-bold mt-1">Configuration Libre</span>
+              <span className="text-[8px] font-black uppercase tracking-wider">Sur Mesure</span>
+              <span className="text-[10px] font-bold mt-0.5">{customPeriodCount} × {customPeriodDuration}m</span>
             </button>
           </div>
         </div>
@@ -623,42 +905,42 @@ const HomeScreen = ({
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden flex flex-col gap-3 pt-1"
+              className="overflow-hidden flex flex-col gap-2 pt-0.5"
             >
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">Périodes</label>
-                  <div className="flex items-center gap-2 bg-surface-high rounded-xl p-1 border border-text/5">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-black text-text-dim uppercase tracking-widest ml-1">Périodes</label>
+                  <div className="flex items-center gap-1.5 bg-surface-high rounded-lg p-1 border border-text/5">
                     <button 
                       onClick={() => setCustomPeriodCount((c: number) => Math.max(1, c - 1))}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted"
+                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="flex-1 text-center font-bold text-sm text-text tabular-nums">{customPeriodCount}</span>
+                    <span className="flex-1 text-center font-bold text-xs text-text tabular-nums">{customPeriodCount}</span>
                     <button 
                       onClick={() => setCustomPeriodCount((c: number) => Math.min(10, c + 1))}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted"
+                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[9px] font-black text-text-dim uppercase tracking-widest ml-1">Minutes / Période</label>
-                  <div className="flex items-center gap-2 bg-surface-high rounded-xl p-1 border border-text/5">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-black text-text-dim uppercase tracking-widest ml-1">Min / Période</label>
+                  <div className="flex items-center gap-1.5 bg-surface-high rounded-lg p-1 border border-text/5">
                     <button 
                       onClick={() => setCustomPeriodDuration((d: number) => Math.max(1, d - 5))}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted"
+                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus className="w-3.5 h-3.5" />
                     </button>
-                    <span className="flex-1 text-center font-bold text-sm text-text tabular-nums">{customPeriodDuration}</span>
+                    <span className="flex-1 text-center font-bold text-xs text-text tabular-nums">{customPeriodDuration}</span>
                     <button 
                       onClick={() => setCustomPeriodDuration((d: number) => Math.min(120, d + 5))}
-                      className="w-8 h-8 flex items-center justify-center rounded-lg bg-surface-bright text-text-muted"
+                      className="w-7 h-7 flex items-center justify-center rounded bg-surface-bright text-text-muted"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -670,12 +952,12 @@ const HomeScreen = ({
 
       <button 
         onClick={() => setCurrentPage('live')}
-        className="w-full mt-2 bg-primary h-14 rounded-2xl flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(129,236,255,0.15)] hover:brightness-110 active:scale-95 transition-all group"
+        className="w-full mt-1 bg-primary h-11 rounded-xl flex items-center justify-center gap-2 shadow-[0_8px_20px_rgba(129,236,255,0.15)] hover:brightness-110 active:scale-95 transition-all group"
       >
-        <span className="font-headline font-black text-on-primary uppercase tracking-[0.2em] text-sm">
+        <span className="font-headline font-black text-on-primary uppercase tracking-[0.2em] text-xs">
           Rejoindre le Live
         </span>
-        <ChevronRight className="w-5 h-5 text-on-primary group-hover:translate-x-1 transition-transform" />
+        <ChevronRight className="w-4 h-4 text-on-primary group-hover:translate-x-1 transition-transform" />
       </button>
     </motion.div>
   );
