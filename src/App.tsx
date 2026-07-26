@@ -242,7 +242,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="pt-13 pb-12 px-3 flex-1 flex flex-col justify-start">
+      <main className="pt-12 pb-12 px-3 flex-1 flex flex-col justify-start">
         <AnimatePresence mode="wait">
           {currentPage === 'live' ? (
             <LiveScoreScreen 
@@ -294,7 +294,7 @@ export default function App() {
 
       {/* Bottom Nav */}
       <nav className="fixed bottom-0 w-full max-w-[360px] z-50 bg-surface/90 backdrop-blur-2xl border-t border-white/5 rounded-t-xl shadow-2xl">
-        <div className="flex justify-around items-center h-11 px-3 w-full">
+        <div className="flex justify-around items-center pl-3 pr-[14px] border-[10px] border-transparent w-full" style={{ height: '53px', borderRadius: '10px' }}>
           <button 
             onClick={() => setCurrentPage('home')}
             className={`flex items-center gap-1.5 transition-all ${currentPage === 'home' ? 'text-primary bg-primary/10 px-4 py-1 rounded-lg' : 'text-text-muted hover:text-primary px-3 py-1'}`}
@@ -410,13 +410,15 @@ const LiveScoreScreen = ({
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex flex-col gap-2"
+      className="flex flex-col gap-3 w-full py-0.5"
+      style={{ paddingTop: '21px' }}
     >
       {/* Timer Card */}
       <motion.section 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-surface-high rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-text/5"
+        style={{ paddingTop: '30px' }}
       >
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-1.5">
@@ -543,7 +545,10 @@ const LiveScoreScreen = ({
       </AnimatePresence>
 
       {/* Score Display with Inline + / - Controls */}
-      <section className="bg-surface-high/80 border border-text/10 rounded-xl p-2.5 shadow-md flex flex-col gap-1">
+      <section 
+        className="bg-surface-high/80 border border-text/10 rounded-xl p-2.5 shadow-md flex flex-col gap-1"
+        style={{ marginTop: '22px' }}
+      >
         <div className="flex items-center justify-between w-full px-1 gap-2">
           {/* Home Team Column */}
           <div className="flex flex-col items-center flex-1 min-w-0">
@@ -628,7 +633,10 @@ const LiveScoreScreen = ({
       </section>
 
       {/* Résultats Intermédiaires Card */}
-      <div className="bg-surface-high/80 border border-text/10 rounded-xl p-2 flex flex-col gap-1 shadow-sm">
+      <div 
+        className="bg-surface-high/80 border border-text/10 rounded-xl p-2 flex flex-col gap-1 shadow-sm"
+        style={{ paddingTop: '31px', marginLeft: '0px', marginTop: '16px' }}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
             <ListOrdered className="w-3.5 h-3.5 text-primary" />
@@ -727,6 +735,7 @@ const LiveScoreScreen = ({
         <button 
           onClick={handleShare}
           className="bg-surface-high hover:bg-surface-bright border border-text/10 h-9 rounded-lg flex items-center justify-center gap-1.5 active:scale-95 transition-all group shadow-sm"
+          style={{ marginTop: '15px' }}
           title="Partager le score"
         >
           <Share2 className="w-3.5 h-3.5 text-primary group-hover:scale-110 transition-transform" />
@@ -737,6 +746,7 @@ const LiveScoreScreen = ({
         <button 
           onClick={resetMatch}
           className="bg-gradient-to-r from-primary to-primary-container h-9 rounded-lg flex items-center justify-center gap-1.5 shadow-[0_4px_14px_rgba(0,227,253,0.2)] hover:scale-[1.02] active:scale-95 transition-all group"
+          style={{ marginTop: '15px', width: '167px' }}
         >
           <span className="font-headline font-black text-on-primary uppercase tracking-wider text-[10px]">
             Fin du Match
@@ -786,7 +796,8 @@ const HomeScreen = ({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="flex flex-col gap-4 py-2"
+      className="flex flex-col gap-3 w-full py-0.5"
+      style={{ paddingTop: '21px' }}
     >
       {/* Last Match Result Card */}
       <AnimatePresence>
