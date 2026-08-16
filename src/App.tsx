@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { 
   Play, 
   Pause, 
@@ -36,30 +36,87 @@ export interface PeriodScore {
 }
 
 export const getPeriodName = (index: number, totalPeriods: number = 2) => {
-  if (totalPeriods === 2) {
-    return index === 0 ? '1ère Mi-temps' : '2ème Mi-temps';
-  } else if (totalPeriods === 3) {
-    return `${index + 1}${index === 0 ? 'er' : 'ème'} Tiers`;
-  } else if (totalPeriods === 4) {
-    return `${index + 1}${index === 0 ? 'er' : 'ème'} Quart-temps`;
+  const safeIndex = Math.max(0, index || 0);
+  const safeTotal = Math.max(1, totalPeriods || 2);
+  if (safeTotal === 2) {
+    return safeIndex === 0 ? '1ère Mi-temps' : '2ème Mi-temps';
+  } else if (safeTotal === 3) {
+    return `${safeIndex + 1}${safeIndex === 0 ? 'er' : 'ème'} Tiers`;
+  } else if (safeTotal === 4) {
+    return `${safeIndex + 1}${safeIndex === 0 ? 'er' : 'ème'} Quart-temps`;
   } else {
-    return `Période ${index + 1}`;
+    return `Période ${safeIndex + 1}`;
   }
 };
 
 export const getPeriodShortName = (index: number, totalPeriods: number = 2) => {
-  if (totalPeriods === 2) {
-    return index === 0 ? '1MT' : '2MT';
-  } else if (totalPeriods === 3) {
-    return `T${index + 1}`;
-  } else if (totalPeriods === 4) {
-    return `Q${index + 1}`;
+  const safeIndex = Math.max(0, index || 0);
+  const safeTotal = Math.max(1, totalPeriods || 2);
+  if (safeTotal === 2) {
+    return safeIndex === 0 ? '1MT' : '2MT';
+  } else if (safeTotal === 3) {
+    return `T${safeIndex + 1}`;
+  } else if (safeTotal === 4) {
+    return `Q${safeIndex + 1}`;
   } else {
-    return `P${index + 1}`;
+    return `P${safeIndex + 1}`;
   }
 };
 
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(): ErrorBoundaryState {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("ErrorBoundary caught:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[#09090b] text-white flex flex-col items-center justify-center p-6 text-center">
+          <AlertCircle className="w-12 h-12 text-[#81ecff] mb-4 animate-bounce" />
+          <h2 className="text-xl font-bold mb-2 font-headline uppercase tracking-wider">ScoreBoard Live</h2>
+          <p className="text-sm text-zinc-400 mb-6">Une erreur d'affichage est survenue.</p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            className="px-6 py-2.5 bg-[#81ecff] text-[#003840] font-black rounded-xl uppercase text-xs tracking-wider shadow-lg hover:brightness-110 active:scale-95 cursor-pointer"
+          >
+            Recharger le tableau
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <ScoreBoardApp />
+    </ErrorBoundary>
+  );
+}
+
+function ScoreBoardApp() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [homeTeamName, setHomeTeamName] = useState('');
@@ -104,10 +161,13 @@ export default function App() {
         next.push({ home: 0, away: 0 });
       }
       const idx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDurationSeconds)));
+      if (!next[idx]) {
+        next[idx] = { home: 0, away: 0 };
+      }
       const curr = next[idx]?.home || 0;
       if (delta < 0 && curr === 0) {
         for (let i = idx - 1; i >= 0; i--) {
-          if (next[i].home > 0) {
+          if (next[i] && next[i].home > 0) {
             next[i] = { ...next[i], home: next[i].home - 1 };
             break;
           }
@@ -126,10 +186,13 @@ export default function App() {
         next.push({ home: 0, away: 0 });
       }
       const idx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDurationSeconds)));
+      if (!next[idx]) {
+        next[idx] = { home: 0, away: 0 };
+      }
       const curr = next[idx]?.away || 0;
       if (delta < 0 && curr === 0) {
         for (let i = idx - 1; i >= 0; i--) {
-          if (next[i].away > 0) {
+          if (next[i] && next[i].away > 0) {
             next[i] = { ...next[i], away: next[i].away - 1 };
             break;
           }
@@ -145,7 +208,7 @@ export default function App() {
     setPeriodScores((prev) => {
       const next = [...prev];
       if (next[periodIndex]) {
-        const currentVal = next[periodIndex][team];
+        const currentVal = next[periodIndex][team] || 0;
         next[periodIndex] = {
           ...next[periodIndex],
           [team]: Math.max(0, currentVal + delta)
@@ -207,11 +270,9 @@ export default function App() {
     setSeconds((prev) => {
       const val = typeof newSeconds === 'function' ? newSeconds(prev) : newSeconds;
       const cleanVal = Math.max(0, val);
-      if (isActive) {
-        timerRef.current = {
-          startTime: Date.now(),
-          baseSeconds: cleanVal,
-        };
+      if (timerRef.current) {
+        timerRef.current.baseSeconds = cleanVal;
+        timerRef.current.startTime = Date.now();
       }
       return cleanVal;
     });
@@ -396,8 +457,8 @@ const LiveScoreScreen = ({
 
   const handleSelectPeriod = (targetIndex: number) => {
     const cleanIndex = Math.max(0, Math.min(totalPeriods - 1, targetIndex));
-    setSeconds(cleanIndex * periodDurationSeconds);
     setIsActive(false);
+    setSeconds(cleanIndex * periodDurationSeconds);
   };
 
   const handlePeriodChange = (direction: 'next' | 'prev') => {
@@ -457,91 +518,56 @@ const LiveScoreScreen = ({
               </button>
             </div>
 
-            {/* Période & Temps réglementaire affinés */}
-            <div className="flex items-center gap-1.5 flex-wrap max-w-full">
-              <div className="flex items-center bg-surface-bright/90 rounded-lg p-0.5 border border-text/10 shadow-sm max-w-full overflow-x-auto no-scrollbar">
-                <button 
-                  onClick={() => handlePeriodChange('prev')}
-                  className={`w-6 h-6 flex items-center justify-center rounded transition-all flex-shrink-0 ${
-                    currentPeriodIndex === 0 
-                      ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
-                      : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
-                  }`}
-                  aria-label="Période précédente"
-                  disabled={currentPeriodIndex === 0}
-                >
-                  <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
-                </button>
-                
-                <div className="flex items-center gap-0.5 px-0.5 overflow-x-auto no-scrollbar">
-                  {Array.from({ length: totalPeriods }).map((_, pIdx) => {
-                    const isSelected = pIdx === currentPeriodIndex;
-                    const pShort = getPeriodShortName(pIdx, totalPeriods);
-                    return (
-                      <button
-                        key={pIdx}
-                        onClick={() => handleSelectPeriod(pIdx)}
-                        className={`px-1.5 py-0.5 rounded text-[11px] font-black tracking-tight uppercase transition-all select-none whitespace-nowrap ${
-                          isSelected
-                            ? 'bg-primary text-on-primary shadow-sm font-black'
-                            : 'text-text-muted hover:text-text hover:bg-surface/50 active:scale-95'
-                        }`}
-                        title={`Passer à ${getPeriodName(pIdx, totalPeriods)}`}
-                      >
-                        {pShort}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button 
-                  onClick={() => handlePeriodChange('next')}
-                  className={`w-6 h-6 flex items-center justify-center rounded transition-all flex-shrink-0 ${
-                    currentPeriodIndex >= totalPeriods - 1 
-                      ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
-                      : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
-                  }`}
-                  aria-label="Période suivante"
-                  disabled={currentPeriodIndex >= totalPeriods - 1}
-                >
-                  <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
-                </button>
+            {/* Période active & Temps réglementaire épuré (Option A) */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 bg-surface-bright/90 px-2.5 py-1 rounded-xl border border-text/10 shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-wider text-text">
+                  {getPeriodName(currentPeriodIndex, totalPeriods)}
+                </span>
+                {totalPeriods > 1 && (
+                  <span className="text-[10px] font-bold text-text-dim px-1.5 py-0.5 rounded bg-surface border border-text/5">
+                    {currentPeriodIndex + 1}/{totalPeriods}
+                  </span>
+                )}
               </div>
 
-              <span className="text-[10px] font-bold text-text-dim bg-surface/60 px-2 py-0.5 rounded-lg border border-text/5 whitespace-nowrap">
+              <span className="text-[11px] font-bold text-text-dim bg-surface/60 px-2.5 py-1 rounded-xl border border-text/5 whitespace-nowrap">
                 {formatTime(Math.min(currentPeriodElapsedSec, periodDurationSeconds))} / {periodDuration}:00
               </span>
             </div>
           </div>
 
-          {/* Boutons Start / Pause & Reset compacts */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
+          {/* Boutons Start / Pause & Reset spacieux & confortables */}
+          <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
             <button 
+              type="button"
               onClick={() => setIsActive(!isActive)}
-              className={`h-9 sm:h-10 px-3.5 sm:px-4 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 font-headline font-black text-xs uppercase tracking-wider ${
+              className={`h-11 sm:h-12 px-5 sm:px-6 flex items-center justify-center gap-2 rounded-xl transition-all active:scale-95 font-headline font-black text-sm uppercase tracking-wider shadow-md ${
                 isActive 
-                  ? 'bg-text/5 text-text-muted border border-text/5 hover:bg-text/10' 
-                  : 'bg-primary text-on-primary shadow-[0_4px_12px_rgba(0,227,253,0.2)] hover:brightness-110'
+                  ? 'bg-text/5 text-text hover:bg-text/10 border border-text/10' 
+                  : 'bg-primary text-on-primary shadow-[0_4px_16px_rgba(0,227,253,0.25)] hover:brightness-110'
               }`}
             >
               {isActive ? (
                 <>
-                  <Pause className="w-3.5 h-3.5" />
+                  <Pause className="w-4 h-4" />
                   <span>Pause</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <Play className="w-4 h-4 fill-current" />
                   <span>{seconds > 0 ? 'Play' : 'Start'}</span>
                 </>
               )}
             </button>
             <button 
+              type="button"
               onClick={() => {
                 setSeconds(0);
                 setIsActive(false);
               }}
-              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
+              className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/10 active:scale-95"
               title="Réinitialiser le chronomètre"
               aria-label="Réinitialiser"
             >
@@ -698,19 +724,18 @@ const LiveScoreScreen = ({
                 <Minus className="w-5 h-5" />
               </button>
               <div className="h-[56px] relative flex items-center justify-center min-w-[42px] overflow-hidden">
-                <AnimatePresence mode="popLayout">
-                  <motion.span 
-                    key={homeScore}
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -10, opacity: 0 }}
-                    className="font-headline text-5xl sm:text-6xl font-black text-text tabular-nums px-0.5"
-                  >
-                    {homeScore}
-                  </motion.span>
-                </AnimatePresence>
+                <motion.span 
+                  key={`home-${homeScore}`}
+                  initial={{ y: 8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                  className="font-headline text-5xl sm:text-6xl font-black text-text tabular-nums px-0.5"
+                >
+                  {homeScore}
+                </motion.span>
               </div>
               <button 
+                type="button"
                 onClick={() => handleHomeScoreChange(1)}
                 className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-primary text-on-primary shadow-md hover:brightness-110 flex items-center justify-center active:scale-95 transition-all"
                 title="+1 Domicile"
@@ -734,6 +759,7 @@ const LiveScoreScreen = ({
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <button 
+                type="button"
                 onClick={() => handleAwayScoreChange(-1)}
                 className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-surface-bright text-text-muted hover:text-text border border-text/5 flex items-center justify-center active:scale-95 transition-all shadow-sm"
                 title="-1 Extérieur"
@@ -742,17 +768,15 @@ const LiveScoreScreen = ({
                 <Minus className="w-5 h-5" />
               </button>
               <div className="h-[56px] relative flex items-center justify-center min-w-[42px] overflow-hidden">
-                <AnimatePresence mode="popLayout">
-                  <motion.span 
-                    key={awayScore}
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -10, opacity: 0 }}
-                    className="font-headline text-5xl sm:text-6xl font-black text-text tabular-nums px-0.5"
-                  >
-                    {awayScore}
-                  </motion.span>
-                </AnimatePresence>
+                <motion.span 
+                  key={`away-${awayScore}`}
+                  initial={{ y: 8, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.15 }}
+                  className="font-headline text-5xl sm:text-6xl font-black text-text tabular-nums px-0.5"
+                >
+                  {awayScore}
+                </motion.span>
               </div>
               <button 
                 onClick={() => handleAwayScoreChange(1)}
@@ -850,9 +874,9 @@ const LiveScoreScreen = ({
                 {/* Score de la période */}
                 <div className="flex items-center gap-1.5 flex-shrink-0 pl-2">
                   <div className="flex items-center gap-1 bg-surface px-2.5 py-1 rounded-lg border border-text/10 shadow-inner">
-                    <span className="text-sm font-black text-primary tabular-nums font-headline">{p.home}</span>
+                    <span className="text-sm font-black text-primary tabular-nums font-headline">{p?.home ?? 0}</span>
                     <span className="text-xs font-bold text-text-dim">-</span>
-                    <span className="text-sm font-black text-secondary tabular-nums font-headline">{p.away}</span>
+                    <span className="text-sm font-black text-secondary tabular-nums font-headline">{p?.away ?? 0}</span>
                   </div>
                 </div>
               </button>
@@ -991,7 +1015,7 @@ const HomeScreen = ({
                     return (
                       <span key={i} className="text-xs font-bold bg-surface-high/90 px-3 py-1.5 rounded-lg border border-text/10 text-text-muted flex items-center gap-1.5 shadow-sm">
                         <span className="text-text-dim uppercase text-[10px] font-black">{getPeriodShortName(i, periodCount)}:</span>
-                        <strong className="text-primary font-black">{p.home}</strong>-<strong className="text-secondary font-black">{p.away}</strong>
+                        <strong className="text-primary font-black">{p?.home ?? 0}</strong>-<strong className="text-secondary font-black">{p?.away ?? 0}</strong>
                         {periodCount > 1 && (
                           <span className="text-[10px] text-text-dim pl-1 border-l border-text/10 font-normal">
                             cumul {cumH}-{cumA}
