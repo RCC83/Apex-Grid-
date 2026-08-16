@@ -251,7 +251,8 @@ function ScoreBoardApp() {
           const elapsed = Math.floor((Date.now() - timerRef.current.startTime) / 1000);
           const currentTotal = timerRef.current.baseSeconds + elapsed;
           
-          const periodEndSec = (currentPeriodIndex + 1) * periodDurationSeconds;
+          const currentIdx = Math.min(totalPeriods - 1, Math.max(0, Math.floor(timerRef.current.baseSeconds / periodDurationSeconds)));
+          const periodEndSec = (currentIdx + 1) * periodDurationSeconds;
           
           // Auto-pause if reaching end of period from before
           if (timerRef.current.baseSeconds < periodEndSec && currentTotal >= periodEndSec) {
@@ -264,7 +265,7 @@ function ScoreBoardApp() {
       }, 250);
     }
     return () => clearInterval(interval);
-  }, [isActive, periodDurationSeconds, currentPeriodIndex]);
+  }, [isActive, periodDurationSeconds, totalPeriods]);
 
   const updateSeconds = (newSeconds: number | ((prev: number) => number)) => {
     setSeconds((prev) => {
@@ -581,36 +582,41 @@ const LiveScoreScreen = ({
           <span className="text-[10px] font-black uppercase text-text-dim">Ajustement :</span>
           <div className="flex items-center gap-1.5">
             <button 
+              type="button"
               onClick={() => adjustSeconds(-60)}
-              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all"
+              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all cursor-pointer select-none"
               title="Reculer d'une minute"
             >
               -1 min
             </button>
             <button 
+              type="button"
               onClick={() => adjustSeconds(-30)}
-              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all"
+              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all cursor-pointer select-none"
               title="Reculer de 30 secondes"
             >
               -30s
             </button>
             <button 
+              type="button"
               onClick={() => adjustSeconds(30)}
-              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all"
+              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all cursor-pointer select-none"
               title="Ajouter 30 secondes"
             >
               +30s
             </button>
             <button 
+              type="button"
               onClick={() => adjustSeconds(60)}
-              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all"
+              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all cursor-pointer select-none"
               title="Ajouter 1 minute"
             >
               +1 min
             </button>
             <button 
+              type="button"
               onClick={() => adjustSeconds(120)}
-              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all"
+              className="px-2 py-1 rounded-lg bg-surface-bright hover:bg-surface text-text-dim hover:text-text text-[10px] font-black border border-text/5 active:scale-95 transition-all cursor-pointer select-none"
               title="Ajouter 2 minutes"
             >
               +2 min
@@ -627,15 +633,17 @@ const LiveScoreScreen = ({
             </div>
             {currentPeriodIndex < totalPeriods - 1 ? (
               <button 
+                type="button"
                 onClick={() => handlePeriodChange('next')}
-                className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-black text-[10px] uppercase hover:brightness-110 transition-all"
+                className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-black text-[10px] uppercase hover:brightness-110 transition-all cursor-pointer"
               >
                 Période suivante →
               </button>
             ) : (
               <button 
+                type="button"
                 onClick={resetMatch}
-                className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-black text-[10px] uppercase hover:brightness-110 transition-all"
+                className="px-2.5 py-1 rounded-lg bg-primary text-on-primary font-black text-[10px] uppercase hover:brightness-110 transition-all cursor-pointer"
               >
                 Fin du match
               </button>
@@ -791,98 +799,122 @@ const LiveScoreScreen = ({
         </div>
       </section>
 
-      {/* Résultats par Période - Version affinée & compacte */}
-      <div className="bg-surface-high/80 border border-text/10 rounded-2xl p-3 sm:p-3.5 flex flex-col gap-2.5 shadow-sm">
-        <div className="flex items-center justify-between px-1">
+      {/* Résultats par Période - Tableau TV / NBA */}
+      <div className="bg-surface-high/90 border border-text/10 rounded-2xl p-3 sm:p-4 flex flex-col gap-3 shadow-md overflow-hidden">
+        <div className="flex items-center justify-between px-0.5">
           <div className="flex items-center gap-2">
             <ListOrdered className="w-3.5 h-3.5 text-primary" />
             <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
-              Résultats par Période
-            </span>
-            <span className="text-[10px] text-text-dim font-bold">
-              ({totalPeriods} × {periodDuration}m)
+              Tableau des Scores par Période
             </span>
           </div>
-          <span className="text-[11px] font-black text-text-dim">
-            Total : <strong className="text-primary font-black">{homeScore}</strong> - <strong className="text-secondary font-black">{awayScore}</strong>
+          <span className="text-[10px] text-text-dim font-bold bg-surface px-2 py-0.5 rounded-md border border-text/5">
+            {totalPeriods} × {periodDuration}m
           </span>
         </div>
 
-        {/* Liste affinée et compacte des périodes */}
-        <div className={`grid gap-2 ${totalPeriods === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
-          {periodScores.map((p: PeriodScore, idx: number) => {
-            const isCurrent = idx === currentPeriodIndex;
-            const isPast = idx < currentPeriodIndex;
-            const periodFullName = getPeriodName(idx, totalPeriods);
-            const shortName = getPeriodShortName(idx, totalPeriods);
-            
-            // Cumulative score up to this period
-            const cumHome = periodScores.slice(0, idx + 1).reduce((s, item) => s + (item?.home || 0), 0);
-            const cumAway = periodScores.slice(0, idx + 1).reduce((s, item) => s + (item?.away || 0), 0);
-
-            return (
-              <button 
-                key={idx}
-                type="button"
-                onClick={() => {
-                  if (!isCurrent) {
-                    handleSelectPeriod(idx);
-                  }
-                }}
-                className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all text-left select-none ${
-                  isCurrent 
-                    ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/20 shadow-sm' 
-                    : isPast 
-                      ? 'bg-surface-bright/70 hover:bg-surface-bright border-text/10 hover:border-primary/30 active:scale-[0.99] cursor-pointer'
-                      : 'bg-surface-high/40 hover:bg-surface-bright/40 border-text/5 opacity-70 hover:opacity-100 active:scale-[0.99] cursor-pointer'
-                }`}
-              >
-                {/* Badge & Nom période */}
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
-                    isCurrent 
-                      ? 'bg-primary text-on-primary font-black' 
-                      : 'bg-surface border border-text/10 text-text-muted'
-                  }`}>
-                    {shortName}
-                  </span>
-
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className={`text-xs font-bold truncate ${isCurrent ? 'text-text' : 'text-text-muted'}`}>
-                        {periodFullName}
-                      </span>
-                      {isCurrent ? (
-                        <span className="flex items-center gap-1 text-[9px] font-black text-primary uppercase">
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                          Live
-                        </span>
-                      ) : isPast ? (
-                        <span className="text-[9px] font-medium text-text-dim">
-                          Terminé
-                        </span>
-                      ) : null}
-                    </div>
-                    {totalPeriods > 1 && (
-                      <span className="text-[10px] text-text-dim">
-                        Cumul : <strong className="text-primary font-semibold">{cumHome}</strong> - <strong className="text-secondary font-semibold">{cumAway}</strong>
-                      </span>
-                    )}
+        {/* Table de score style Box-Score TV */}
+        <div className="w-full overflow-x-auto no-scrollbar rounded-xl border border-text/10 bg-surface/70 shadow-inner">
+          <table className="w-full text-center border-collapse min-w-full text-xs select-none">
+            <thead>
+              <tr className="border-b border-text/10 bg-surface-bright/80 text-[10px] uppercase font-black tracking-wider text-text-dim">
+                <th className="text-left py-2.5 px-3 font-black text-text-muted">Équipe</th>
+                {Array.from({ length: totalPeriods }).map((_, idx) => {
+                  const isCurrent = idx === currentPeriodIndex;
+                  const isPast = idx < currentPeriodIndex;
+                  const shortName = getPeriodShortName(idx, totalPeriods);
+                  return (
+                    <th 
+                      key={idx} 
+                      onClick={() => handleSelectPeriod(idx)}
+                      title={`Sélectionner ${getPeriodName(idx, totalPeriods)}`}
+                      className={`py-2.5 px-2.5 cursor-pointer transition-colors ${
+                        isCurrent 
+                          ? 'bg-primary/20 text-primary font-black border-b-2 border-primary' 
+                          : isPast 
+                            ? 'text-text-muted hover:text-text hover:bg-surface-high' 
+                            : 'text-text-dim/60 hover:text-text hover:bg-surface-high'
+                      }`}
+                    >
+                      <div className="flex items-center justify-center gap-1">
+                        <span>{shortName}</span>
+                        {isCurrent && <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />}
+                      </div>
+                    </th>
+                  );
+                })}
+                <th className="py-2.5 px-3 bg-surface-high/60 font-black text-text border-l border-text/10">
+                  TOT
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-text/5 font-headline">
+              {/* Ligne Équipe Domicile */}
+              <tr className="hover:bg-primary/5 transition-colors">
+                <td className="text-left py-2.5 px-3 font-bold text-text truncate max-w-[120px] sm:max-w-[160px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                    <span className="truncate">{homeTeamName || 'Domicile'}</span>
                   </div>
-                </div>
+                </td>
+                {Array.from({ length: totalPeriods }).map((_, idx) => {
+                  const isCurrent = idx === currentPeriodIndex;
+                  const pScore = periodScores[idx]?.home ?? 0;
+                  return (
+                    <td 
+                      key={idx} 
+                      onClick={() => handleSelectPeriod(idx)}
+                      className={`py-2.5 px-2.5 tabular-nums text-sm font-black cursor-pointer transition-all ${
+                        isCurrent 
+                          ? 'bg-primary/10 text-primary font-black' 
+                          : 'text-text hover:bg-surface-bright/50'
+                      }`}
+                    >
+                      {pScore}
+                    </td>
+                  );
+                })}
+                <td className="py-2.5 px-3 tabular-nums text-base font-black text-primary bg-primary/10 border-l border-text/10">
+                  {homeScore}
+                </td>
+              </tr>
 
-                {/* Score de la période */}
-                <div className="flex items-center gap-1.5 flex-shrink-0 pl-2">
-                  <div className="flex items-center gap-1 bg-surface px-2.5 py-1 rounded-lg border border-text/10 shadow-inner">
-                    <span className="text-sm font-black text-primary tabular-nums font-headline">{p?.home ?? 0}</span>
-                    <span className="text-xs font-bold text-text-dim">-</span>
-                    <span className="text-sm font-black text-secondary tabular-nums font-headline">{p?.away ?? 0}</span>
+              {/* Ligne Équipe Extérieur */}
+              <tr className="hover:bg-secondary/5 transition-colors">
+                <td className="text-left py-2.5 px-3 font-bold text-text truncate max-w-[120px] sm:max-w-[160px]">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-secondary flex-shrink-0" />
+                    <span className="truncate">{awayTeamName || 'Extérieur'}</span>
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                </td>
+                {Array.from({ length: totalPeriods }).map((_, idx) => {
+                  const isCurrent = idx === currentPeriodIndex;
+                  const pScore = periodScores[idx]?.away ?? 0;
+                  return (
+                    <td 
+                      key={idx} 
+                      onClick={() => handleSelectPeriod(idx)}
+                      className={`py-2.5 px-2.5 tabular-nums text-sm font-black cursor-pointer transition-all ${
+                        isCurrent 
+                          ? 'bg-primary/10 text-secondary font-black' 
+                          : 'text-text hover:bg-surface-bright/50'
+                      }`}
+                    >
+                      {pScore}
+                    </td>
+                  );
+                })}
+                <td className="py-2.5 px-3 tabular-nums text-base font-black text-secondary bg-secondary/10 border-l border-text/10">
+                  {awayScore}
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+        
+        <p className="text-[10px] text-text-dim text-center -mt-1">
+          💡 Astuce : Cliquez sur une colonne de période ({getPeriodShortName(0, totalPeriods)}, {getPeriodShortName(1, totalPeriods)}...) pour synchroniser le chrono.
+        </p>
       </div>
 
       {/* Action Buttons */}
@@ -1010,17 +1042,10 @@ const HomeScreen = ({
               {periodScores && periodScores.length > 0 && (
                 <div className="flex items-center justify-center gap-2 flex-wrap pt-2.5 border-t border-primary/10">
                   {periodScores.map((p: PeriodScore, i: number) => {
-                    const cumH = periodScores.slice(0, i + 1).reduce((s, item) => s + (item?.home || 0), 0);
-                    const cumA = periodScores.slice(0, i + 1).reduce((s, item) => s + (item?.away || 0), 0);
                     return (
                       <span key={i} className="text-xs font-bold bg-surface-high/90 px-3 py-1.5 rounded-lg border border-text/10 text-text-muted flex items-center gap-1.5 shadow-sm">
                         <span className="text-text-dim uppercase text-[10px] font-black">{getPeriodShortName(i, periodCount)}:</span>
                         <strong className="text-primary font-black">{p?.home ?? 0}</strong>-<strong className="text-secondary font-black">{p?.away ?? 0}</strong>
-                        {periodCount > 1 && (
-                          <span className="text-[10px] text-text-dim pl-1 border-l border-text/10 font-normal">
-                            cumul {cumH}-{cumA}
-                          </span>
-                        )}
                       </span>
                     );
                   })}
@@ -1051,13 +1076,13 @@ const HomeScreen = ({
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-black text-primary uppercase tracking-wider ml-1">Équipe Domicile</label>
           <div className="relative">
-            <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
+            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
             <input 
               type="text" 
               value={homeTeamName}
               onChange={(e) => setHomeTeamName(e.target.value)}
               placeholder="Nom de l'équipe domicile"
-              className="w-full h-12 bg-surface-high border border-text/10 rounded-xl pl-11 pr-4 text-sm sm:text-base text-text font-headline font-bold focus:outline-none focus:border-primary/50 transition-all placeholder:text-text-dim/60 shadow-sm"
+              className="w-full h-14 bg-surface-high border border-text/10 rounded-2xl pl-12 pr-4 text-base sm:text-lg text-text font-headline font-bold focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-text-dim/60 shadow-sm"
             />
           </div>
         </div>
@@ -1066,13 +1091,13 @@ const HomeScreen = ({
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-black text-secondary uppercase tracking-wider ml-1">Équipe Extérieur</label>
           <div className="relative">
-            <Shield className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
+            <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-dim" />
             <input 
               type="text" 
               value={awayTeamName}
               onChange={(e) => setAwayTeamName(e.target.value)}
               placeholder="Nom de l'équipe extérieur"
-              className="w-full h-12 bg-surface-high border border-text/10 rounded-xl pl-11 pr-4 text-sm sm:text-base text-text font-headline font-bold focus:outline-none focus:border-secondary/50 transition-all placeholder:text-text-dim/60 shadow-sm"
+              className="w-full h-14 bg-surface-high border border-text/10 rounded-2xl pl-12 pr-4 text-base sm:text-lg text-text font-headline font-bold focus:outline-none focus:border-secondary/50 focus:ring-1 focus:ring-secondary/20 transition-all placeholder:text-text-dim/60 shadow-sm"
             />
           </div>
         </div>
@@ -1096,6 +1121,7 @@ const HomeScreen = ({
               </span>
               <div className="flex items-center gap-2 bg-surface-bright rounded-xl p-2 border border-text/10 shadow-sm">
                 <button 
+                  type="button"
                   onClick={() => setPeriodCount((c: number) => Math.max(1, c - 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface text-text-muted hover:text-text active:scale-95 transition-all"
                   aria-label="Moins de périodes"
@@ -1106,6 +1132,7 @@ const HomeScreen = ({
                   {periodCount}
                 </span>
                 <button 
+                  type="button"
                   onClick={() => setPeriodCount((c: number) => Math.min(10, c + 1))}
                   className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface text-text-muted hover:text-text active:scale-95 transition-all"
                   aria-label="Plus de périodes"
@@ -1115,13 +1142,14 @@ const HomeScreen = ({
               </div>
             </div>
 
-            {/* Durée par Période */}
+            {/* Durée par Période (Capped at 60 max) */}
             <div className="flex flex-col gap-1.5">
               <span className="text-xs font-bold text-text-dim uppercase tracking-wider ml-0.5">
-                Min / Période
+                Min / Période (max 60)
               </span>
               <div className="flex items-center gap-2 bg-surface-bright rounded-xl p-2 border border-text/10 shadow-sm">
                 <button 
+                  type="button"
                   onClick={() => setPeriodDuration((d: number) => Math.max(1, d - 5))}
                   className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface text-text-muted hover:text-text active:scale-95 transition-all"
                   aria-label="Moins de minutes"
@@ -1132,9 +1160,11 @@ const HomeScreen = ({
                   {periodDuration}
                 </span>
                 <button 
-                  onClick={() => setPeriodDuration((d: number) => Math.min(120, d + 5))}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface text-text-muted hover:text-text active:scale-95 transition-all"
+                  type="button"
+                  onClick={() => setPeriodDuration((d: number) => Math.min(60, d + 5))}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface text-text-muted hover:text-text active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   aria-label="Plus de minutes"
+                  disabled={periodDuration >= 60}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
