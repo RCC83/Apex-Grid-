@@ -394,23 +394,22 @@ const LiveScoreScreen = ({
     setSeconds((prev: number) => Math.max(0, prev + delta));
   };
 
+  const handleSelectPeriod = (targetIndex: number) => {
+    const cleanIndex = Math.max(0, Math.min(totalPeriods - 1, targetIndex));
+    setSeconds(cleanIndex * periodDurationSeconds);
+    setIsActive(false);
+  };
+
   const handlePeriodChange = (direction: 'next' | 'prev') => {
-    const durationInSeconds = periodDuration * 60;
-    let nextSeconds = seconds;
     if (direction === 'next') {
       if (currentPeriodIndex < totalPeriods - 1) {
-        nextSeconds = (currentPeriodIndex + 1) * durationInSeconds;
+        handleSelectPeriod(currentPeriodIndex + 1);
       }
     } else {
       if (currentPeriodIndex > 0) {
-        nextSeconds = (currentPeriodIndex - 1) * durationInSeconds;
-      } else {
-        nextSeconds = 0;
+        handleSelectPeriod(currentPeriodIndex - 1);
       }
     }
-    
-    setSeconds(nextSeconds);
-    setIsActive(false);
   };
 
   return (
@@ -460,29 +459,56 @@ const LiveScoreScreen = ({
 
             {/* Période & Temps réglementaire */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center gap-1 bg-text/5 rounded-full px-2.5 py-0.5 w-fit border border-text/5">
+              <div className="flex items-center bg-surface-bright/90 rounded-xl p-0.5 border border-text/10 shadow-sm">
                 <button 
                   onClick={() => handlePeriodChange('prev')}
-                  className="p-0.5 text-text-muted hover:text-primary transition-colors"
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                    currentPeriodIndex === 0 
+                      ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
+                      : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
+                  }`}
                   aria-label="Période précédente"
                   disabled={currentPeriodIndex === 0}
                 >
-                  <ChevronLeft className="w-3.5 h-3.5" strokeWidth={3} />
+                  <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
                 </button>
-                <span className="text-[11px] font-black uppercase tracking-wider text-text-muted px-1">
-                  {getPeriodLabel()}
-                </span>
+                
+                <div className="flex items-center gap-1 px-1.5">
+                  {Array.from({ length: totalPeriods }).map((_, pIdx) => {
+                    const isSelected = pIdx === currentPeriodIndex;
+                    const pShort = getPeriodShortName(pIdx, totalPeriods);
+                    return (
+                      <button
+                        key={pIdx}
+                        onClick={() => handleSelectPeriod(pIdx)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-black tracking-wider uppercase transition-all select-none ${
+                          isSelected
+                            ? 'bg-primary text-on-primary shadow-sm scale-105'
+                            : 'text-text-muted hover:text-text hover:bg-surface/50 active:scale-95'
+                        }`}
+                        title={`Passer à ${getPeriodName(pIdx, totalPeriods)}`}
+                      >
+                        {pShort}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <button 
                   onClick={() => handlePeriodChange('next')}
-                  className="p-0.5 text-text-muted hover:text-primary transition-colors"
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                    currentPeriodIndex >= totalPeriods - 1 
+                      ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
+                      : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
+                  }`}
                   aria-label="Période suivante"
                   disabled={currentPeriodIndex >= totalPeriods - 1}
                 >
-                  <ChevronRight className="w-3.5 h-3.5" strokeWidth={3} />
+                  <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
                 </button>
               </div>
 
-              <span className="text-[11px] font-bold text-text-dim">
+              <span className="text-[11px] font-bold text-text-dim bg-surface/60 px-2.5 py-1 rounded-lg border border-text/5">
                 {formatTime(Math.min(currentPeriodElapsedSec, periodDurationSeconds))} / {periodDuration}:00
               </span>
             </div>
@@ -619,6 +645,8 @@ const LiveScoreScreen = ({
                   <span className="text-xs font-black text-text-dim uppercase tracking-wider">Minutes</span>
                   <input 
                     type="number" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={editMinutes}
                     onChange={(e) => setEditMinutes(e.target.value)}
                     className="w-20 h-20 bg-surface-bright border border-text/10 rounded-2xl text-center text-3xl sm:text-4xl font-headline font-black text-text focus:outline-none focus:border-primary/50 shadow-inner"
@@ -629,6 +657,8 @@ const LiveScoreScreen = ({
                   <span className="text-xs font-black text-text-dim uppercase tracking-wider">Secondes</span>
                   <input 
                     type="number" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={editSeconds}
                     onChange={(e) => setEditSeconds(e.target.value)}
                     className="w-20 h-20 bg-surface-bright border border-text/10 rounded-2xl text-center text-3xl sm:text-4xl font-headline font-black text-text focus:outline-none focus:border-primary/50 shadow-inner"
@@ -737,31 +767,25 @@ const LiveScoreScreen = ({
         </div>
       </section>
 
-      {/* Résultats Intermédiaires - Tableau de bord par période */}
-      <div className="bg-surface-high/90 border border-text/10 rounded-2xl p-4 flex flex-col gap-3 shadow-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
-              <ListOrdered className="w-4 h-4" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-text">
-                Résultats par Période
-              </span>
-              <span className="text-[10px] font-bold text-text-dim">
-                Évolution du score ({totalPeriods} × {periodDuration}m)
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-surface-bright border border-text/10 text-primary">
-              {homeScore} - {awayScore}
+      {/* Résultats par Période - Version affinée & compacte */}
+      <div className="bg-surface-high/80 border border-text/10 rounded-2xl p-3 sm:p-3.5 flex flex-col gap-2.5 shadow-sm">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <ListOrdered className="w-3.5 h-3.5 text-primary" />
+            <span className="text-[11px] font-black uppercase tracking-wider text-text-muted">
+              Résultats par Période
+            </span>
+            <span className="text-[10px] text-text-dim font-bold">
+              ({totalPeriods} × {periodDuration}m)
             </span>
           </div>
+          <span className="text-[11px] font-black text-text-dim">
+            Total : <strong className="text-primary font-black">{homeScore}</strong> - <strong className="text-secondary font-black">{awayScore}</strong>
+          </span>
         </div>
 
-        {/* Grille des périodes */}
-        <div className={`grid gap-2.5 pt-1 ${totalPeriods <= 2 ? 'grid-cols-1 sm:grid-cols-2' : totalPeriods === 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
+        {/* Liste affinée et compacte des périodes */}
+        <div className={`grid gap-2 ${totalPeriods === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
           {periodScores.map((p: PeriodScore, idx: number) => {
             const isCurrent = idx === currentPeriodIndex;
             const isPast = idx < currentPeriodIndex;
@@ -773,104 +797,67 @@ const LiveScoreScreen = ({
             const cumAway = periodScores.slice(0, idx + 1).reduce((s, item) => s + (item?.away || 0), 0);
 
             return (
-              <div 
+              <button 
                 key={idx}
-                className={`relative flex flex-col justify-between p-3.5 rounded-xl border transition-all ${
+                type="button"
+                onClick={() => {
+                  if (!isCurrent) {
+                    handleSelectPeriod(idx);
+                  }
+                }}
+                className={`flex items-center justify-between px-3 py-2 rounded-xl border transition-all text-left select-none ${
                   isCurrent 
-                    ? 'bg-primary/10 border-primary/60 shadow-sm ring-1 ring-primary/30' 
+                    ? 'bg-primary/10 border-primary/50 ring-1 ring-primary/20 shadow-sm' 
                     : isPast 
-                      ? 'bg-surface-bright/80 border-text/10'
-                      : 'bg-surface-high/40 border-text/5 opacity-70'
+                      ? 'bg-surface-bright/70 hover:bg-surface-bright border-text/10 hover:border-primary/30 active:scale-[0.99] cursor-pointer'
+                      : 'bg-surface-high/40 hover:bg-surface-bright/40 border-text/5 opacity-70 hover:opacity-100 active:scale-[0.99] cursor-pointer'
                 }`}
               >
-                {/* En-tête période & statut */}
-                <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-text/5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-surface border border-text/10 text-text">
-                      {shortName}
-                    </span>
-                    <span className={`text-xs font-black uppercase tracking-wider truncate ${isCurrent ? 'text-primary' : 'text-text-muted'}`}>
-                      {periodFullName}
-                    </span>
-                  </div>
-
-                  {isCurrent ? (
-                    <span className="flex items-center gap-1 text-[9px] font-black bg-primary text-on-primary px-2 py-0.5 rounded-md uppercase tracking-wider shadow-sm flex-shrink-0">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      En cours
-                    </span>
-                  ) : isPast ? (
-                    <span className="text-[9px] font-bold text-text-dim bg-surface/80 px-2 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0">
-                      Terminé
-                    </span>
-                  ) : (
-                    <span className="text-[9px] font-bold text-text-dim/60 bg-surface/40 px-2 py-0.5 rounded-md uppercase tracking-wider flex-shrink-0">
-                      À venir
-                    </span>
-                  )}
-                </div>
-
-                {/* Score central de la période */}
-                <div className="flex items-center justify-center gap-3 py-1.5 my-0.5 bg-surface/60 rounded-xl border border-text/5">
-                  <div className="flex flex-col items-center">
-                    <span className="text-xl sm:text-2xl font-black text-primary font-headline tabular-nums">
-                      {p.home}
-                    </span>
-                    <span className="text-[9px] font-black text-text-dim uppercase tracking-wider truncate max-w-[50px]">
-                      {homeTeamName || 'DOM'}
-                    </span>
-                  </div>
-
-                  <span className="text-base font-black text-text-dim/50 pb-3">-</span>
-
-                  <div className="flex flex-col items-center">
-                    <span className="text-xl sm:text-2xl font-black text-secondary font-headline tabular-nums">
-                      {p.away}
-                    </span>
-                    <span className="text-[9px] font-black text-text-dim uppercase tracking-wider truncate max-w-[50px]">
-                      {awayTeamName || 'EXT'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Pied de carte : Cumul & Navigation */}
-                <div className="flex items-center justify-between text-[10px] pt-2 mt-1 border-t border-text/5">
-                  <span className="font-bold text-text-dim">
-                    Cumul : <strong className="text-primary">{cumHome}</strong> - <strong className="text-secondary">{cumAway}</strong>
+                {/* Badge & Nom période */}
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                    isCurrent 
+                      ? 'bg-primary text-on-primary font-black' 
+                      : 'bg-surface border border-text/10 text-text-muted'
+                  }`}>
+                    {shortName}
                   </span>
 
-                  {!isCurrent && (
-                    <button 
-                      onClick={() => {
-                        setSeconds(idx * periodDuration * 60);
-                        setIsActive(false);
-                      }}
-                      className="text-[10px] font-black text-primary hover:underline transition-all"
-                      title="Placer le chrono sur cette période"
-                    >
-                      Aller à →
-                    </button>
-                  )}
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className={`text-xs font-bold truncate ${isCurrent ? 'text-text' : 'text-text-muted'}`}>
+                        {periodFullName}
+                      </span>
+                      {isCurrent ? (
+                        <span className="flex items-center gap-1 text-[9px] font-black text-primary uppercase">
+                          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                          Live
+                        </span>
+                      ) : isPast ? (
+                        <span className="text-[9px] font-medium text-text-dim">
+                          Terminé
+                        </span>
+                      ) : null}
+                    </div>
+                    {totalPeriods > 1 && (
+                      <span className="text-[10px] text-text-dim">
+                        Cumul : <strong className="text-primary font-semibold">{cumHome}</strong> - <strong className="text-secondary font-semibold">{cumAway}</strong>
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
+
+                {/* Score de la période */}
+                <div className="flex items-center gap-1.5 flex-shrink-0 pl-2">
+                  <div className="flex items-center gap-1 bg-surface px-2.5 py-1 rounded-lg border border-text/10 shadow-inner">
+                    <span className="text-sm font-black text-primary tabular-nums font-headline">{p.home}</span>
+                    <span className="text-xs font-bold text-text-dim">-</span>
+                    <span className="text-sm font-black text-secondary tabular-nums font-headline">{p.away}</span>
+                  </div>
+                </div>
+              </button>
             );
           })}
-        </div>
-
-        {/* Ligne récapitulative chronologique */}
-        <div className="flex items-center justify-between text-[11px] font-bold bg-surface-bright/80 px-3.5 py-2.5 rounded-xl border border-text/5 text-text-muted flex-wrap gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-text-dim uppercase text-[10px] font-black">Progression :</span>
-            {periodScores.map((p: PeriodScore, i: number) => (
-              <span key={i} className="inline-flex items-center gap-1 bg-surface px-2 py-0.5 rounded-md border border-text/5">
-                <span className="text-text-dim text-[10px]">{getPeriodShortName(i, totalPeriods)}</span>
-                <strong className={i === currentPeriodIndex ? 'text-primary font-black' : 'text-text font-bold'}>{p.home}-{p.away}</strong>
-              </span>
-            ))}
-          </div>
-          <span className="text-primary font-black text-xs">
-            Score Total : {homeScore} - {awayScore}
-          </span>
         </div>
       </div>
 
