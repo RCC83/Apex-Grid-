@@ -259,10 +259,10 @@ export default function App() {
             </div>
             <div className="flex flex-col -space-y-0.5">
               <span className="text-text font-headline font-black italic tracking-tighter text-sm leading-none">
-                MATCH
+                SCOREBOARD
               </span>
               <span className="text-primary font-headline font-black italic tracking-tighter text-sm leading-none">
-                COMPTEUR
+                LIVE
               </span>
             </div>
           </motion.div>
@@ -425,17 +425,17 @@ const LiveScoreScreen = ({
         animate={{ opacity: 1, y: 0 }}
         className="bg-surface-high rounded-2xl p-4 flex flex-col gap-3 shadow-lg border border-text/5"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex flex-col gap-1.5 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex flex-col gap-1.5 min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-headline text-primary text-4xl sm:text-5xl font-black tracking-tight tabular-nums leading-none">
+              <span className="font-headline text-primary text-3xl sm:text-5xl font-black tracking-tight tabular-nums leading-none">
                 {formatTime(seconds)}
               </span>
 
               {/* Petit carré de temps additionnel */}
               {extraTimeSeconds > 0 && (
                 <div 
-                  className="px-2 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-lg text-xs font-black tabular-nums tracking-wide flex items-center gap-1 shadow-sm"
+                  className="px-2 py-0.5 bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded-lg text-[11px] font-black tabular-nums tracking-wide flex items-center gap-1 shadow-sm"
                   title={`Temps additionnel : +${formatTime(extraTimeSeconds)}`}
                 >
                   <span className="text-[10px] uppercase font-bold text-amber-400/80">+</span>
@@ -449,20 +449,20 @@ const LiveScoreScreen = ({
                   setEditSeconds((seconds % 60).toString());
                   setIsEditingTime(true);
                 }}
-                className="p-1.5 text-text-dim hover:text-primary transition-colors"
+                className="p-1 text-text-dim hover:text-primary transition-colors"
                 title="Éditer le temps manuellement"
                 aria-label="Éditer le temps"
               >
-                <Edit2 className="w-4 h-4" />
+                <Edit2 className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Période & Temps réglementaire */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="flex items-center bg-surface-bright/90 rounded-xl p-0.5 border border-text/10 shadow-sm">
+            {/* Période & Temps réglementaire affinés */}
+            <div className="flex items-center gap-1.5 flex-wrap max-w-full">
+              <div className="flex items-center bg-surface-bright/90 rounded-lg p-0.5 border border-text/10 shadow-sm max-w-full overflow-x-auto no-scrollbar">
                 <button 
                   onClick={() => handlePeriodChange('prev')}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                  className={`w-6 h-6 flex items-center justify-center rounded transition-all flex-shrink-0 ${
                     currentPeriodIndex === 0 
                       ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
                       : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
@@ -470,10 +470,10 @@ const LiveScoreScreen = ({
                   aria-label="Période précédente"
                   disabled={currentPeriodIndex === 0}
                 >
-                  <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
+                  <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </button>
                 
-                <div className="flex items-center gap-1 px-1.5">
+                <div className="flex items-center gap-0.5 px-0.5 overflow-x-auto no-scrollbar">
                   {Array.from({ length: totalPeriods }).map((_, pIdx) => {
                     const isSelected = pIdx === currentPeriodIndex;
                     const pShort = getPeriodShortName(pIdx, totalPeriods);
@@ -481,9 +481,9 @@ const LiveScoreScreen = ({
                       <button
                         key={pIdx}
                         onClick={() => handleSelectPeriod(pIdx)}
-                        className={`px-2.5 py-1 rounded-lg text-xs font-black tracking-wider uppercase transition-all select-none ${
+                        className={`px-1.5 py-0.5 rounded text-[11px] font-black tracking-tight uppercase transition-all select-none whitespace-nowrap ${
                           isSelected
-                            ? 'bg-primary text-on-primary shadow-sm scale-105'
+                            ? 'bg-primary text-on-primary shadow-sm font-black'
                             : 'text-text-muted hover:text-text hover:bg-surface/50 active:scale-95'
                         }`}
                         title={`Passer à ${getPeriodName(pIdx, totalPeriods)}`}
@@ -496,7 +496,7 @@ const LiveScoreScreen = ({
 
                 <button 
                   onClick={() => handlePeriodChange('next')}
-                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                  className={`w-6 h-6 flex items-center justify-center rounded transition-all flex-shrink-0 ${
                     currentPeriodIndex >= totalPeriods - 1 
                       ? 'text-text-dim/30 cursor-not-allowed pointer-events-none' 
                       : 'text-text-muted hover:text-text hover:bg-surface active:scale-90'
@@ -504,21 +504,21 @@ const LiveScoreScreen = ({
                   aria-label="Période suivante"
                   disabled={currentPeriodIndex >= totalPeriods - 1}
                 >
-                  <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
+                  <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
                 </button>
               </div>
 
-              <span className="text-[11px] font-bold text-text-dim bg-surface/60 px-2.5 py-1 rounded-lg border border-text/5">
+              <span className="text-[10px] font-bold text-text-dim bg-surface/60 px-2 py-0.5 rounded-lg border border-text/5 whitespace-nowrap">
                 {formatTime(Math.min(currentPeriodElapsedSec, periodDurationSeconds))} / {periodDuration}:00
               </span>
             </div>
           </div>
 
-          {/* Boutons Start / Pause & Reset */}
-          <div className="flex items-center gap-2">
+          {/* Boutons Start / Pause & Reset compacts */}
+          <div className="flex items-center gap-1.5 flex-shrink-0 self-end sm:self-center">
             <button 
               onClick={() => setIsActive(!isActive)}
-              className={`h-11 sm:h-12 px-5 flex items-center justify-center gap-2 rounded-xl transition-all active:scale-95 font-headline font-black text-xs sm:text-sm uppercase tracking-wider ${
+              className={`h-9 sm:h-10 px-3.5 sm:px-4 flex items-center justify-center gap-1.5 rounded-xl transition-all active:scale-95 font-headline font-black text-xs uppercase tracking-wider ${
                 isActive 
                   ? 'bg-text/5 text-text-muted border border-text/5 hover:bg-text/10' 
                   : 'bg-primary text-on-primary shadow-[0_4px_12px_rgba(0,227,253,0.2)] hover:brightness-110'
@@ -526,13 +526,13 @@ const LiveScoreScreen = ({
             >
               {isActive ? (
                 <>
-                  <Pause className="w-4 h-4" />
+                  <Pause className="w-3.5 h-3.5" />
                   <span>Pause</span>
                 </>
               ) : (
                 <>
-                  <Play className="w-4 h-4 fill-current" />
-                  <span>{seconds > 0 ? 'PLAY' : 'START'}</span>
+                  <Play className="w-3.5 h-3.5 fill-current" />
+                  <span>{seconds > 0 ? 'Play' : 'Start'}</span>
                 </>
               )}
             </button>
@@ -541,11 +541,11 @@ const LiveScoreScreen = ({
                 setSeconds(0);
                 setIsActive(false);
               }}
-              className="w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
+              className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-text/5 text-text-dim hover:text-text hover:bg-text/10 transition-all border border-text/5 active:scale-95"
               title="Réinitialiser le chronomètre"
               aria-label="Réinitialiser"
             >
-              <RotateCcw className="w-5 h-5" />
+              <RotateCcw className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -903,7 +903,7 @@ const HomeScreen = ({
       .map((p: PeriodScore, i: number) => `${getPeriodShortName(i, periodCount)}: ${p.home}-${p.away}`)
       .join(' | ');
 
-    const shareText = `🏁 Résultat Final\n⚽ ${home} ${homeScore} - ${awayScore} ${away}\n📊 Détail par période: ${breakdownText}\n\nMatch Compteur`;
+    const shareText = `🏁 Résultat Final\n⚽ ${home} ${homeScore} - ${awayScore} ${away}\n📊 Détail par période: ${breakdownText}\n\nScoreBoard Live`;
     const shareUrl = window.location.href;
 
     if (navigator.share) {

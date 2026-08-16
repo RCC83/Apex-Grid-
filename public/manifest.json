@@ -1,7 +1,7 @@
 {
-  "name": "Match Compteur",
-  "short_name": "MatchCompteur",
-  "description": "Compteur de score professionnel pour vos matchs.",
+  "name": "ScoreBoard Live",
+  "short_name": "ScoreBoard",
+  "description": "Compteur de score et chronomètre professionnel pour vos matchs.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#09090b",
