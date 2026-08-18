@@ -533,8 +533,8 @@ const LiveScoreScreen = ({
                 )}
               </div>
 
-              <span className="text-[11px] font-bold text-text-dim bg-surface/60 px-2.5 py-1 rounded-xl border border-text/5 whitespace-nowrap">
-                {formatTime(Math.min(currentPeriodElapsedSec, periodDurationSeconds))} / {periodDuration}:00
+              <span className="text-[11px] font-bold text-text-dim bg-surface/60 px-2.5 py-1 rounded-xl border border-text/5 whitespace-nowrap tabular-nums notranslate">
+                {formatTime(Math.min(currentPeriodElapsedSec, periodDurationSeconds))} / {formatTime(periodDurationSeconds)}
               </span>
             </div>
           </div>
