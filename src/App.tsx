@@ -116,25 +116,93 @@ export default function App() {
   );
 }
 
+const STORAGE_KEY = 'scoreboard_app_state_v1';
+
+interface SavedAppState {
+  currentPage?: Page;
+  theme?: 'dark' | 'light';
+  homeTeamName?: string;
+  awayTeamName?: string;
+  seconds?: number;
+  isActive?: boolean;
+  lastActiveTimestamp?: number;
+  periodCount?: number;
+  periodDuration?: number;
+  isMatchFinished?: boolean;
+  periodScores?: PeriodScore[];
+}
+
+const loadSavedState = (): SavedAppState => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    return JSON.parse(raw) as SavedAppState;
+  } catch (e) {
+    console.error('Error loading saved state from localStorage:', e);
+    return {};
+  }
+};
+
 function ScoreBoardApp() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-  const [homeTeamName, setHomeTeamName] = useState('');
-  const [awayTeamName, setAwayTeamName] = useState('');
-  const [seconds, setSeconds] = useState(0);
-  const [isActive, setIsActive] = useState(false);
-  const [periodCount, setPeriodCount] = useState(2);
-  const [periodDuration, setPeriodDuration] = useState(45);
-  const [isMatchFinished, setIsMatchFinished] = useState(false);
+  const initialData = useRef<SavedAppState>(loadSavedState()).current;
+
+  const [currentPage, setCurrentPage] = useState<Page>(initialData.currentPage || 'home');
+  const [theme, setTheme] = useState<'dark' | 'light'>(initialData.theme || 'dark');
+  const [homeTeamName, setHomeTeamName] = useState(initialData.homeTeamName ?? '');
+  const [awayTeamName, setAwayTeamName] = useState(initialData.awayTeamName ?? '');
+  
+  // Calculate restored seconds (taking elapsed background time into account if it was running)
+  const calculateRestoredSeconds = () => {
+    if (typeof initialData.seconds !== 'number') return 0;
+    if (initialData.isActive && initialData.lastActiveTimestamp) {
+      const elapsedSinceClose = Math.floor((Date.now() - initialData.lastActiveTimestamp) / 1000);
+      const totalSec = Math.max(1, initialData.periodCount || 2) * Math.max(1, initialData.periodDuration || 45) * 60;
+      return Math.min(totalSec, initialData.seconds + Math.max(0, elapsedSinceClose));
+    }
+    return initialData.seconds;
+  };
+
+  const [seconds, setSeconds] = useState<number>(calculateRestoredSeconds);
+  const [isActive, setIsActive] = useState<boolean>(false); // Start paused upon reopen for safety
+  const [periodCount, setPeriodCount] = useState<number>(initialData.periodCount ?? 2);
+  const [periodDuration, setPeriodDuration] = useState<number>(initialData.periodDuration ?? 45);
+  const [isMatchFinished, setIsMatchFinished] = useState<boolean>(initialData.isMatchFinished ?? false);
 
   const totalPeriods = Math.max(1, periodCount);
   const periodDurationSeconds = Math.max(1, periodDuration) * 60;
   const currentPeriodIndex = Math.min(totalPeriods - 1, Math.max(0, Math.floor(seconds / periodDurationSeconds)));
 
-  const [periodScores, setPeriodScores] = useState<PeriodScore[]>([
-    { home: 0, away: 0 },
-    { home: 0, away: 0 }
-  ]);
+  const [periodScores, setPeriodScores] = useState<PeriodScore[]>(() => {
+    if (Array.isArray(initialData.periodScores) && initialData.periodScores.length > 0) {
+      return initialData.periodScores;
+    }
+    return [
+      { home: 0, away: 0 },
+      { home: 0, away: 0 }
+    ];
+  });
+
+  // Automatically persist all state changes to localStorage
+  useEffect(() => {
+    try {
+      const stateToSave: SavedAppState = {
+        currentPage,
+        theme,
+        homeTeamName,
+        awayTeamName,
+        seconds,
+        isActive,
+        lastActiveTimestamp: isActive ? Date.now() : undefined,
+        periodCount,
+        periodDuration,
+        isMatchFinished,
+        periodScores
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.error('Error saving state to localStorage:', e);
+    }
+  }, [currentPage, theme, homeTeamName, awayTeamName, seconds, isActive, periodCount, periodDuration, isMatchFinished, periodScores]);
 
   useEffect(() => {
     setPeriodScores((prev) => {
