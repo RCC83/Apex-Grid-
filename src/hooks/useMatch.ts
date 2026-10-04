@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import type { MatchEvent, Page, PeriodScore, Team } from '../types';
+import type { MatchEvent, MatchRecord, Page, PeriodScore, Team } from '../types';
 import { loadSavedState, saveState, type SavedAppState } from '../lib/storage';
 import { formatEventMinute, teamLabel } from '../lib/periods';
+import { loadHistory, saveHistory } from '../lib/history';
+import { newId } from '../lib/id';
 
 interface UndoEntry {
   label: string;
@@ -11,7 +13,6 @@ interface UndoEntry {
 
 const MAX_UNDO = 30;
 
-const newEventId = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 const emptyScores = (count: number): PeriodScore[] =>
   Array.from({ length: count }, () => ({ home: 0, away: 0 }));
@@ -56,6 +57,8 @@ export function useMatch() {
     Array.isArray(initialData.events) ? initialData.events : []
   );
   const [undoStack, setUndoStack] = useState<UndoEntry[]>([]);
+  const [matchId, setMatchId] = useState<string>(() => initialData.matchId || newId());
+  const [history, setHistory] = useState<MatchRecord[]>(loadHistory);
 
   // Automatically persist all state changes to localStorage
   useEffect(() => {
@@ -72,8 +75,9 @@ export function useMatch() {
       isMatchFinished,
       periodScores,
       events,
+      matchId,
     });
-  }, [currentPage, theme, homeTeamName, awayTeamName, seconds, isActive, periodCount, periodDuration, isMatchFinished, periodScores, events]);
+  }, [currentPage, theme, homeTeamName, awayTeamName, seconds, isActive, periodCount, periodDuration, isMatchFinished, periodScores, events, matchId]);
 
   useEffect(() => {
     setPeriodScores((prev) => {
@@ -118,7 +122,7 @@ export function useMatch() {
     const idx = currentPeriodIndex;
     const next = normalizedScores();
     next[idx] = { ...next[idx], [team]: (next[idx][team] || 0) + 1 };
-    const event: MatchEvent = { id: newEventId(), team, periodIndex: idx, second: seconds };
+    const event: MatchEvent = { id: newId(), team, periodIndex: idx, second: seconds };
     commit(`But ${teamName(team)} ${eventMinute(event)}`, next, [...events, event]);
   };
 
@@ -245,13 +249,39 @@ export function useMatch() {
 
   // --- Cycle de vie du match ---
 
+  /** Photo du match en cours, au format de l'historique. */
+  const toRecord = (): MatchRecord => ({
+    id: matchId,
+    finishedAt: new Date().toISOString(),
+    homeTeamName,
+    awayTeamName,
+    periodCount: totalPeriods,
+    periodDuration,
+    periodScores: normalizedScores().slice(0, totalPeriods),
+    events,
+  });
+
+  const updateHistory = (next: MatchRecord[]) => {
+    setHistory(next);
+    saveHistory(next);
+  };
+
   const endMatch = () => {
     setIsActive(false);
     setIsMatchFinished(true);
     setCurrentPage('home');
+
+    // Un match jamais commencé (chrono à zéro, aucun but) n'est pas archivé
+    if (seconds === 0 && homeScore + awayScore === 0) return;
+    const record = toRecord();
+    // Si le match a déjà été terminé puis repris, on met à jour sa fiche au lieu d'en créer une autre
+    updateHistory([record, ...history.filter((r) => r.id !== record.id)]);
   };
 
+  const deleteFromHistory = (id: string) => updateHistory(history.filter((r) => r.id !== id));
+
   const clearAll = () => {
+    setMatchId(newId());
     setPeriodScores(emptyScores(totalPeriods));
     setEvents([]);
     setUndoStack([]);
@@ -278,6 +308,7 @@ export function useMatch() {
     addGoal, removeGoal, setEventScorer, deleteEvent,
     undo, lastActionLabel,
     selectPeriod, endMatch, clearAll,
+    toRecord, history, deleteFromHistory,
   };
 }
 

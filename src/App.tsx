@@ -10,6 +10,7 @@ import { AppHeader } from './components/AppHeader';
 import { BottomNav } from './components/BottomNav';
 import { LiveScoreScreen } from './screens/LiveScoreScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { HistoryScreen } from './screens/HistoryScreen';
 
 export default function App() {
   return (
@@ -28,7 +29,9 @@ function ScoreBoardApp() {
 
       <main className="pt-16 pb-20 px-4 flex-1 flex flex-col justify-start">
         <AnimatePresence mode="wait">
-          {match.currentPage === 'live' ? (
+          {match.currentPage === 'history' ? (
+            <HistoryScreen key="history" match={match} />
+          ) : match.currentPage === 'live' ? (
             <LiveScoreScreen key="live" match={match} />
           ) : (
             <HomeScreen key="home" match={match} />

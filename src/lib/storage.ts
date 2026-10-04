@@ -15,6 +15,7 @@ export interface SavedAppState {
   isMatchFinished?: boolean;
   periodScores?: PeriodScore[];
   events?: MatchEvent[];
+  matchId?: string;
 }
 
 export const loadSavedState = (): SavedAppState => {

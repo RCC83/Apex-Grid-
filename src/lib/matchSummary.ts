@@ -1,6 +1,6 @@
-import type { Match } from '../hooks/useMatch';
-import type { Team } from '../types';
-import { getPeriodShortName } from './periods';
+import type { MatchEvent, MatchRecord, Team } from '../types';
+import { formatEventMinute, getPeriodShortName, teamLabel } from './periods';
+import { recordScore } from './history';
 
 export interface MatchSummary {
   home: string;
@@ -13,12 +13,12 @@ export interface MatchSummary {
   date: string;
 }
 
-const scorerLine = (match: Match, team: Team) => {
-  const goals = match.events.filter((e) => e.team === team).sort((a, b) => a.second - b.second);
+const scorerLine = (events: MatchEvent[], team: Team, periodDuration: number) => {
+  const goals = events.filter((e) => e.team === team).sort((a, b) => a.second - b.second);
   const named = new Map<string, string[]>();
   const unnamed: string[] = [];
   for (const goal of goals) {
-    const minute = match.eventMinute(goal);
+    const minute = formatEventMinute(goal.second, goal.periodIndex, periodDuration);
     if (goal.scorer) {
       named.set(goal.scorer, [...(named.get(goal.scorer) ?? []), minute]);
     } else {
@@ -30,19 +30,25 @@ const scorerLine = (match: Match, team: Team) => {
   return parts.join(' · ');
 };
 
-export const buildMatchSummary = (match: Match): MatchSummary => ({
-  home: match.teamName('home'),
-  away: match.teamName('away'),
-  homeScore: match.homeScore,
-  awayScore: match.awayScore,
-  periods: match.periodScores.map((p, i) => ({
-    label: getPeriodShortName(i, match.periodCount),
-    home: p?.home ?? 0,
-    away: p?.away ?? 0,
-  })),
-  scorers: { home: scorerLine(match, 'home'), away: scorerLine(match, 'away') },
-  date: new Date().toLocaleDateString('fr-FR'),
-});
+export const buildMatchSummary = (record: MatchRecord): MatchSummary => {
+  const score = recordScore(record);
+  return {
+    home: teamLabel(record.homeTeamName, 'Domicile'),
+    away: teamLabel(record.awayTeamName, 'Extérieur'),
+    homeScore: score.home,
+    awayScore: score.away,
+    periods: record.periodScores.map((p, i) => ({
+      label: getPeriodShortName(i, record.periodCount),
+      home: p?.home ?? 0,
+      away: p?.away ?? 0,
+    })),
+    scorers: {
+      home: scorerLine(record.events, 'home', record.periodDuration),
+      away: scorerLine(record.events, 'away', record.periodDuration),
+    },
+    date: new Date(record.finishedAt).toLocaleDateString('fr-FR'),
+  };
+};
 
 export const buildShareText = (s: MatchSummary) => {
   const lines = [

@@ -5,11 +5,12 @@ import type { Match } from '../hooks/useMatch';
 import { LastResultCard } from '../components/home/LastResultCard';
 import { MatchSetupForm } from '../components/home/MatchSetupForm';
 import { ShareModal } from '../components/home/ShareModal';
+import { buildMatchSummary, type MatchSummary } from '../lib/matchSummary';
 import { InstallBanner } from '../components/home/InstallBanner';
 
 export function HomeScreen({ match }: { match: Match }) {
   const { setCurrentPage } = match;
-  const [isSharing, setIsSharing] = useState(false);
+  const [shareSummary, setShareSummary] = useState<MatchSummary | null>(null);
 
   return (
     <motion.div 
@@ -19,8 +20,8 @@ export function HomeScreen({ match }: { match: Match }) {
       className="flex flex-col gap-3.5 w-full py-1"
     >
       <InstallBanner />
-      <LastResultCard match={match} onShare={() => setIsSharing(true)} />
-      <ShareModal match={match} open={isSharing} onClose={() => setIsSharing(false)} />
+      <LastResultCard match={match} onShare={() => setShareSummary(buildMatchSummary(match.toRecord()))} />
+      <ShareModal summary={shareSummary} onClose={() => setShareSummary(null)} />
       <MatchSetupForm match={match} />
 
       <button 

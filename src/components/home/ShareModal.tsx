@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, Copy, Download, Loader2, Share2, X } from 'lucide-react';
-import type { Match } from '../../hooks/useMatch';
-import { buildMatchSummary, buildShareText } from '../../lib/matchSummary';
+import { buildShareText, type MatchSummary } from '../../lib/matchSummary';
 import { renderResultImage } from '../../lib/shareImage';
 
 const slug = (s: string) =>
   s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'equipe';
 
 /** Aperçu de l'image du résultat ; l'utilisateur choisit ensuite de la partager ou de la télécharger. */
-export function ShareModal({ match, open, onClose }: { match: Match; open: boolean; onClose: () => void }) {
+export function ShareModal({ summary, onClose }: { summary: MatchSummary | null; onClose: () => void }) {
+  const open = summary !== null;
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null);
   const [error, setError] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const summary = useMemo(() => (open ? buildMatchSummary(match) : null), [open]);
   const fileName = summary ? `score-${slug(summary.home)}-${slug(summary.away)}.png` : 'score.png';
 
   useEffect(() => {
