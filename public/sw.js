@@ -3,7 +3,7 @@
 // - Fichiers de l'app (/assets/*, icônes) : cache d'abord (leurs noms changent à chaque build).
 // - Polices Google : cache, mis à jour en arrière-plan.
 
-const CACHE = 'scoreboard-v1';
+const CACHE = 'scoreboard-v2';
 const PRECACHE = ['/', '/manifest.json', '/icons/icon-192.png', '/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {

@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
-import { Trophy, Sun, Moon } from 'lucide-react';
+import { Sun, Moon } from 'lucide-react';
 import type { Match } from '../hooks/useMatch';
+import { Logo } from './Logo';
 
 export function AppHeader({ match }: { match: Match }) {
   const { theme, setTheme, setCurrentPage } = match;
@@ -14,9 +15,7 @@ export function AppHeader({ match }: { match: Match }) {
             onClick={() => setCurrentPage('home')}
             className="flex items-center gap-2.5 z-10 cursor-pointer"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-[0_3px_10px_rgba(0,227,253,0.25)] border border-white/10">
-              <Trophy className="w-4 h-4 text-on-primary" />
-            </div>
+            <Logo className="w-9 h-9 flex-shrink-0 drop-shadow-[0_3px_10px_rgba(0,227,253,0.25)]" />
             <div className="flex flex-col -space-y-0.5">
               <span className="text-text font-headline font-black italic tracking-tighter text-sm leading-none">
                 SCOREBOARD

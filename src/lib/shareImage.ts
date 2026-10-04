@@ -1,4 +1,5 @@
 import type { MatchSummary } from './matchSummary';
+import { LOGO } from './logo';
 
 // Image verticale 9:16 (stories, WhatsApp), toujours en thème sombre.
 const W = 1080;
@@ -15,7 +16,6 @@ const C = {
   line: 'rgba(250,250,250,0.10)',
   home: '#81ecff',
   away: '#ff7436',
-  onHome: '#003840',
 };
 
 const HEADLINE = 'Lexend, Inter, system-ui, sans-serif';
@@ -69,6 +69,29 @@ const roundRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.beginPath();
   ctx.roundRect(x, y, w, h, r);
   ctx.fill();
+};
+
+/** Dessine le logo de l'app (carré cyan, S dans le cercle de chrono) en (x, y), côté size. */
+const drawLogo = (ctx: CanvasRenderingContext2D, x: number, y: number, size: number) => {
+  const { size: base, radius, background, ink, track, progress, letter } = LOGO;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(size / base, size / base);
+  ctx.fillStyle = background;
+  roundRect(ctx, 0, 0, base, base, radius);
+  ctx.strokeStyle = ink;
+  ctx.lineCap = 'round';
+  ctx.globalAlpha = track.opacity;
+  ctx.lineWidth = track.width;
+  ctx.beginPath();
+  ctx.arc(track.cx, track.cy, track.r, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = progress.width;
+  ctx.stroke(new Path2D(progress.d));
+  ctx.lineWidth = letter.width;
+  ctx.stroke(new Path2D(letter.d));
+  ctx.restore();
 };
 
 const loadFonts = async () => {
@@ -202,16 +225,11 @@ export async function renderResultImage(s: MatchSummary): Promise<Blob> {
 
   // Signature
   const brandY = H - 150;
-  ctx.fillStyle = C.home;
-  roundRect(ctx, PAD, brandY - 52, 72, 72, 18);
-  ctx.fillStyle = C.onHome;
-  ctx.font = font(900, 40);
-  ctx.textAlign = 'center';
-  ctx.fillText('S', PAD + 36, brandY - 1);
+  drawLogo(ctx, PAD, brandY - 54, 76);
   ctx.textAlign = 'left';
   ctx.fillStyle = C.muted;
   ctx.font = font(800, 40);
-  ctx.fillText('ScoreBoard Live', PAD + 100, brandY);
+  ctx.fillText('ScoreBoard Live', PAD + 104, brandY);
 
   return new Promise((resolve, reject) =>
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Image vide'))), 'image/png')
