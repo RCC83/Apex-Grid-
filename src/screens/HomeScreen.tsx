@@ -5,6 +5,7 @@ import type { Match } from '../hooks/useMatch';
 import { LastResultCard } from '../components/home/LastResultCard';
 import { MatchSetupForm } from '../components/home/MatchSetupForm';
 import { ShareModal } from '../components/home/ShareModal';
+import { InstallBanner } from '../components/home/InstallBanner';
 
 export function HomeScreen({ match }: { match: Match }) {
   const { setCurrentPage } = match;
@@ -17,6 +18,7 @@ export function HomeScreen({ match }: { match: Match }) {
       exit={{ opacity: 0, scale: 0.95 }}
       className="flex flex-col gap-3.5 w-full py-1"
     >
+      <InstallBanner />
       <LastResultCard match={match} onShare={() => setIsSharing(true)} />
       <ShareModal match={match} open={isSharing} onClose={() => setIsSharing(false)} />
       <MatchSetupForm match={match} />
